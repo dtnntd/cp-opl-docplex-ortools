@@ -1,6 +1,9 @@
 # Báo cáo khảo sát CP — OPL vs DOcplex.cp vs OR-Tools
 
 So sánh cách triển khai Constraint Programming trên ba chiều, qua 6 bài toán.
+
+📄 **Đọc bản đã dựng: https://dtnntd.github.io/cp-opl-docplex-ortools/**
+
 Đặc tả nội dung nằm ở [`CP_report_brief.md`](CP_report_brief.md); kế hoạch thi công
 và phân phối công việc nằm ở [`PLAN.md`](PLAN.md).
 
@@ -51,7 +54,11 @@ make run P=models/2.1_jobshop   # ba chiều của một bài
 make run-all                    # cả 6 bài × 3 chiều -> results/
 make bench                      # đo hiệu năng bài 3.2
 make html                       # chạy notebook và xuất report/html/
+make pages                      # đẩy report/html/ lên nhánh gh-pages
 ```
+
+`make pages` ghi đè nhánh `gh-pages` bằng `report/html/` hiện tại. Nhánh đó rời
+khỏi `main` và chỉ chứa HTML đã dựng, nên `main` không bao giờ lẫn file build.
 
 ## Bố cục
 

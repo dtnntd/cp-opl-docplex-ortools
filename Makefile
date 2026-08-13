@@ -1,7 +1,7 @@
 PY := python3
 NB := $(wildcard notebooks/*.ipynb)
 
-.PHONY: help setup check run run-all bench notebooks html clean
+.PHONY: help setup check run run-all bench notebooks html pages clean
 
 help:  ## Liệt kê các lệnh
 	@grep -E '^[a-zA-Z_-]+:.*?##' $(MAKEFILE_LIST) \
@@ -27,7 +27,10 @@ notebooks:  ## Chạy lại toàn bộ notebook tại chỗ
 	jupyter nbconvert --to notebook --execute --inplace $(NB)
 
 html: notebooks  ## Xuất báo cáo ra report/html/
-	bash report/build.sh
+	SKIP_EXECUTE=1 bash report/build.sh
+
+pages: ## Đẩy report/html/ lên nhánh gh-pages (GitHub Pages)
+	bash report/publish.sh
 
 clean:  ## Xoá kết quả trung gian
 	rm -rf report/html/* results/*.json results/*.csv .ipynb_checkpoints notebooks/.ipynb_checkpoints
