@@ -1,0 +1,51 @@
+{
+  "problem": "2.1_jobshop",
+  "title": "Job-shop scheduling (instance ft06)",
+  "part": 2,
+  "category": "Scheduling",
+  "objective": "min makespan",
+  "known_optimum": 55,
+  "shared_data": "Cả ba chiều đọc đúng một file: data/jobshop/ft06.dat. Chiều OPL đọc trực tiếp (cú pháp .dat gốc); hai chiều Python đọc qua models/2.1_jobshop/jobshop_data.py.",
+  "reference_data": {
+    "ibm_opl_default": "/mnt/d/Program Files/IBM/ILOG/CPLEX_Studio_Community222/opl/examples/opl/sched_jobshop/sched_jobshop.dat",
+    "note": "Instance 6x6 mặc định đi kèm sched_jobshop.mod của IBM — KHÔNG phải ft06 (tối ưu 45, không phải 55). Không dùng trong bài; giữ tham chiếu để đối chiếu."
+  },
+  "dimensions": {
+    "opl": {
+      "model": "models/2.1_jobshop/opl/sched_jobshop.mod",
+      "args": ["data/jobshop/ft06.dat"],
+      "source": "official",
+      "encoding": "dvar interval + dvar sequence + noOverlap + endBeforeStart",
+      "note": "IBM CPLEX Studio 22.2 — opl/examples/opl/sched_jobshop/sched_jobshop.mod. Phần dựng mô hình nguyên văn; chỉ thêm khối execute EMIT_RESULT và đổi file dữ liệu sang ft06.",
+      "timeout": 300
+    },
+    "docplexcp": {
+      "model": "models/2.1_jobshop/docplexcp/jobshop_cp.py",
+      "args": ["data/jobshop/ft06.dat"],
+      "source": "official",
+      "encoding": "interval_var + no_overlap + end_before_start",
+      "note": "docplex examples/cp/visu/job_shop_basic.py (Apache 2.0, (c) IBM Corp. 2015, 2022). Phần dựng mô hình nguyên văn; chỉ thêm cpo_env, đọc .dat dùng chung, dòng RESULT và Gantt matplotlib thay cho utils_visu.",
+      "timeout": 300
+    },
+    "ortools": {
+      "model": "models/2.1_jobshop/ortools/jobshop_sat.py",
+      "args": ["data/jobshop/ft06.dat"],
+      "source": "new",
+      "encoding": "new_interval_var + add_no_overlap + add_max_equality",
+      "note": "Viết mới. Bản hướng dẫn của Google nhúng cứng dữ liệu 3x3 nên không dùng lại được; giữ nguyên cách mã hoá interval mà tài liệu Google khuyến nghị. num_workers=1, random_seed=42 để số liệu tái lập.",
+      "timeout": 300
+    }
+  },
+  "cross_check": {
+    "instance": "ft06",
+    "expected_objective": 55,
+    "observed": { "opl": 55, "docplexcp": 55, "ortools": 55 }
+  },
+  "artifacts": {
+    "gantt": [
+      "results/jobshop_ft06_docplexcp.png",
+      "results/jobshop_ft06_ortools.png"
+    ],
+    "how": "thêm cờ --gantt <file.png> vào hai model Python"
+  }
+}

@@ -1,0 +1,26 @@
+/* Bài 3.1 — Lập lịch thi đấu thể thao (double round-robin)
+ *
+ * Dữ liệu DÙNG CHUNG cho cả ba chiều: chiều opl đọc trực tiếp, hai chiều Python
+ * đọc qua tools/opl_dat.py. Chỉ có đúng một tham số: số đội n (phải chẵn).
+ *
+ * Mọi đại lượng khác suy ra từ n:
+ *     nbWeeks        = 2*(n-1)     số tuần của mùa giải
+ *     nbGamesPerWeek = n/2         số trận mỗi tuần
+ *     nbGames        = n*(n-1)     tổng số trận
+ *
+ * VÌ SAO n = 6 CHỨ KHÔNG PHẢI 10 NHƯ BẢN GỐC CỦA IBM
+ * ---------------------------------------------------
+ * sports.mod gốc đặt n = 10. Trần của CPLEX Studio *Community Edition* là không
+ * gian tìm kiếm 2^1000 (xem PLAN.md §2.1). Đo thật:
+ *
+ *     n = 6   ->  log2 không gian = 510.6   OK  — tối ưu 12 break trong ~1.5 s
+ *     n = 8   ->  ước tính ~1090            FATAL[ENGINE_001]
+ *     n = 10  ->  ước tính ~1925            FATAL[ENGINE_001]
+ *
+ * => n = 6 là giá trị LỚN NHẤT chạy được trên bản Community. Chiều OR-Tools
+ * (CP-SAT) KHÔNG có trần này và giải được cả n = 8 lẫn n = 10 — xem NOTES.md
+ * mục (d.4). Đổi n ở đây thì cả ba chiều đổi theo, nhưng hai chiều CP Optimizer
+ * sẽ hỏng nếu n > 6 trên bản Community.
+ */
+
+n = 6;

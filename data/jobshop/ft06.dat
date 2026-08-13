@@ -1,0 +1,25 @@
+// Bài 2.1 — Job-shop scheduling | DỮ LIỆU DÙNG CHUNG cho cả ba chiều
+//
+// Instance: ft06 — Fisher & Thompson (1963), 6 jobs x 6 machines.
+//   Makespan tối ưu đã biết: 55.  (Mốc đối chiếu chuẩn của OR-Library.)
+//
+// Nguồn nguyên bản: vendor/docplex/examples/cp/visu/data/jobshop_ft06.data
+//   (IBM Decision Optimization — docplex examples, Apache License 2.0)
+// File này là bản chuyển sang cú pháp .dat của OPL, sinh tự động từ file trên;
+// nội dung số liệu giữ nguyên từng con số, chỉ đổi cách viết.
+//
+// Mỗi phần tử <mch, pt> = <máy thực hiện, thời gian gia công>.
+// Ops[j][o] là công đoạn thứ o (0-based) của job j — thứ tự trong hàng CHÍNH LÀ
+// thứ tự công nghệ bắt buộc của job đó.
+
+nbJobs = 6;
+nbMchs = 6;
+
+Ops = [
+  [ <2,1>, <0,3>, <1,6>, <3,7>, <5,3>, <4,6> ],
+  [ <1,8>, <2,5>, <4,10>, <5,10>, <0,10>, <3,4> ],
+  [ <2,5>, <3,4>, <5,8>, <0,9>, <1,1>, <4,7> ],
+  [ <1,5>, <0,5>, <2,5>, <3,3>, <4,8>, <5,9> ],
+  [ <2,9>, <1,3>, <4,5>, <5,4>, <0,3>, <3,1> ],
+  [ <1,3>, <3,3>, <5,9>, <0,10>, <4,4>, <2,1> ]
+];

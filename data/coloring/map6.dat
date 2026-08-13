@@ -1,0 +1,46 @@
+/* Dữ liệu bài 1.1 Tô màu đồ thị — DÙNG CHUNG cho cả ba chiều.
+ *
+ * Đây chính là bộ dữ liệu của hai ví dụ chính thức (color.mod của OPL và
+ * examples/cp/basic/color.py của DOcplex.cp): bản đồ 6 nước Tây Âu, 4 màu.
+ * Hai ví dụ đó viết thẳng dữ liệu vào trong model; file này ghi lại đúng bộ
+ * dữ liệu ấy để:
+ *
+ *   - chiều OR-Tools (viết mới) dựng model thẳng từ đây;
+ *   - chiều OPL và DOcplex.cp ĐỐI CHIẾU phần hardcode của mình với file này
+ *     lúc chạy (OPL: assert + kiểm tra nghiệm trong execute; DOcplex.cp:
+ *     assert trước khi solve). Lệch một cạnh là báo lỗi ngay, nên ba chiều
+ *     không có đường nào chạy trên hai đồ thị khác nhau.
+ *
+ * Định dạng .dat của OPL, đọc được bằng oplrun lẫn tools/opl_dat.py.
+ */
+
+NbColors = 4;
+
+ColorNames = { "blue", "white", "yellow", "green" };
+
+/* Đỉnh của đồ thị. Thứ tự giữ đúng thứ tự khai báo dvar của color.mod gốc,
+ * để ba chiều sinh ra biến theo cùng một thứ tự.
+ */
+Countries = {
+   "Belgium",
+   "Denmark",
+   "France",
+   "Germany",
+   "Luxembourg",
+   "Netherlands"
+};
+
+/* Cạnh = cặp nước có chung biên giới. Thứ tự giữ đúng thứ tự 9 ràng buộc `!=`
+ * của color.mod gốc. Đồ thị vô hướng nên mỗi cạnh chỉ ghi một lần.
+ */
+Edges = {
+   <"Belgium",    "France">,
+   <"Belgium",    "Germany">,
+   <"Belgium",    "Netherlands">,
+   <"Belgium",    "Luxembourg">,
+   <"Denmark",    "Germany">,
+   <"France",     "Germany">,
+   <"France",     "Luxembourg">,
+   <"Germany",    "Luxembourg">,
+   <"Germany",    "Netherlands">
+};

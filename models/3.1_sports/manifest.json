@@ -1,0 +1,59 @@
+{
+  "problem": "3.1_sports",
+  "title": "Lập lịch thi đấu thể thao (double round-robin)",
+  "part": 3,
+  "category": "Assignment / Scheduling — round-robin tournament",
+  "objective": "min tổng số break (biến thể A) — xem cảnh báo `two_official_variants`",
+  "shared_data": "Cả ba chiều đọc đúng một tham số n từ data/sports/sports.dat; hai chiều Python đọc qua tools/opl_dat.py",
+  "instance": { "n": 6, "nb_weeks": 10, "nb_games_per_week": 3, "nb_games": 30 },
+  "two_official_variants": {
+    "warning": "Hai mẫu chính thức của IBM mang cùng tên 'sports scheduling' nhưng là HAI BÀI TOÁN KHÁC NHAU. KHÔNG so objective giữa chiều docplexcp và hai chiều còn lại.",
+    "A": "opl/examples/opl/sports/sports.mod — double round-robin có sân nhà/khách, min tổng break. Dùng ở chiều opl và ortools.",
+    "B": "docplex examples/cp/jupyter/sports_scheduling.ipynb — lịch NFL hai bảng đấu, max tổng tuần của các trận liên bảng. Dùng ở chiều docplexcp.",
+    "note": "Số tuần của hai biến thể TRÙNG NHAU (4k-2 với k = n/2) nên cùng chạy được ở n = 6, 10 tuần."
+  },
+  "dimensions": {
+    "opl": {
+      "model": "models/3.1_sports/opl/sports.mod",
+      "args": ["data/sports/sports.dat"],
+      "source": "official",
+      "variant": "A",
+      "encoding": "allowedAssignments + allDifferent + inverse + count (4 ràng buộc toàn cục)",
+      "note": "sports.mod nguyên bản của IBM; chỉ đổi `int n = 10;` thành `int n = ...;` để dùng chung dữ liệu, và thêm khối execute EMIT_RESULT. Bản gốc đối chiếu: opl/sports_reference.mod",
+      "timeout": 300
+    },
+    "docplexcp": {
+      "model": "models/3.1_sports/docplexcp/sports_scheduling_cp.py",
+      "args": ["6"],
+      "source": "official",
+      "variant": "B",
+      "encoding": "integer_var chỉ số tuần + all_diff + allowed_assignments (reify thành số hạng của một tổng)",
+      "note": "Trích nguyên văn các ô code của notebook IBM. BÀI TOÁN KHÁC hai chiều kia — không so objective. Bản port biến thể A sang docplex.cp để so trục ngôn ngữ/engine nằm ở companion.docplexcp_portA",
+      "timeout": 300
+    },
+    "ortools": {
+      "model": "models/3.1_sports/ortools/sports_sat.py",
+      "args": ["data/sports/sports.dat"],
+      "source": "new",
+      "variant": "A",
+      "encoding": "add_allowed_assignments + add_all_different + add_inverse + 1-hot bằng add_map_domain (CP-SAT không có count)",
+      "note": "Port ĐẦY ĐỦ sports.mod, không lược bỏ ràng buộc nào. Kiểm chứng chéo với chiều OPL: cùng objective tối ưu = 12 ở n = 6. Sinh 285 biến bool phụ (501 biến so với 216 của CP Optimizer).",
+      "timeout": 300
+    }
+  },
+  "companion": {
+    "docplexcp_portA": {
+      "model": "models/3.1_sports/docplexcp/sports_portA_cp.py",
+      "args": ["data/sports/sports.dat"],
+      "source": "new",
+      "variant": "A",
+      "note": "KHÔNG phải một chiều của báo cáo. Port biến thể A sang docplex.cp để tách được trục NGÔN NGỮ (vs opl/sports.mod) và trục ENGINE (vs ortools/sports_sat.py) trên cùng một bài toán. Cũng cho objective tối ưu = 12."
+    }
+  },
+  "community_edition_limit": {
+    "max_n_solvable": 6,
+    "measured_log2_search_space_n6": 510.6,
+    "estimated_log2_search_space_n8": 1092,
+    "note": "n = 8 và n = 10 bị CP Optimizer Community từ chối bằng FATAL[ENGINE_001] (trần 2^1000). CP-SAT không có trần này: n = 8 tối ưu trong 14.8 s, n = 10 (đúng cỡ bản gốc IBM) tối ưu trong 17.9 s."
+  }
+}

@@ -1,0 +1,13 @@
+# Lớp mô hình hoá + engine
+ortools>=9.14          # engine CP-SAT (đi kèm luôn trong package)
+docplex>=2.32          # CHỈ dùng nhánh docplex.cp; engine CP Optimizer lấy từ CPLEX Studio
+                       # (docplex KHÔNG chứa solver — xem tools/cpo_env.py)
+
+# Notebook + xuất báo cáo
+jupyter
+nbconvert
+nbformat
+
+# Dữ liệu, bảng biểu, biểu đồ Gantt cho phần lập lịch
+pandas
+matplotlib

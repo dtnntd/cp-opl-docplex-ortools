@@ -1,0 +1,53 @@
+{
+  "problem": "1.1_graph_coloring",
+  "title": "Tô màu đồ thị (Graph Coloring)",
+  "part": 1,
+  "category": "Combinatorial / Constraint Satisfaction",
+  "objective": "CSP thuần — tìm một phép tô hợp lệ, không có hàm mục tiêu. Phần mở rộng min sắc số chạy riêng bằng cờ --min (chiều OPL: color_min.mod)",
+  "shared_data": "Cả ba chiều dùng data/coloring/map6.dat — bản đồ 6 nước Tây Âu, 9 cạnh, 4 màu. Chiều OR-Tools dựng model thẳng từ file; hai chiều lấy mẫu chính thức giữ nguyên phần hardcode của IBM nhưng assert lại với file này lúc chạy, nên không có đường nào để ba chiều lệch dữ liệu.",
+  "dimensions": {
+    "opl": {
+      "model": "models/1.1_graph_coloring/opl/color.mod",
+      "args": ["data/coloring/map6.dat"],
+      "source": "official",
+      "encoding": "6 dvar int có tên riêng + 9 ràng buộc != viết tay (nguyên bản IBM)",
+      "note": "<Install_dir>/opl/examples/opl/color/color.mod — Copyright IBM Corporation 1998, 2026. Phần dvar + subject to giữ nguyên văn; chỉ thêm khai báo dữ liệu chung + assert và khối execute in RESULT."
+    },
+    "docplexcp": {
+      "model": "models/1.1_graph_coloring/docplexcp/color_cp.py",
+      "args": ["data/coloring/map6.dat"],
+      "source": "official",
+      "encoding": "6 integer_var có tên riêng + 9 ràng buộc != viết tay (nguyên bản IBM)",
+      "note": "vendor/docplex/examples/cp/basic/color.py — (c) Copyright IBM Corp. 2015, 2022, Apache 2.0. Phần dựng mô hình giữ nguyên văn; chỉ thêm cấu hình engine, assert dữ liệu chung và dòng RESULT."
+    },
+    "ortools": {
+      "model": "models/1.1_graph_coloring/ortools/color_sat.py",
+      "args": ["data/coloring/map6.dat"],
+      "source": "new",
+      "encoding": "dict biến nguyên color[c] dựng bằng vòng lặp từ dữ liệu + forall cạnh",
+      "note": "Google không có ví dụ graph coloring chính thức cho CP-SAT. Dựng model thẳng từ data/coloring/map6.dat qua tools/opl_dat.py. Cố định num_search_workers=1 và random_seed=0 để số liệu tái lập."
+    }
+  },
+  "extension": {
+    "name": "min_colors",
+    "objective": "min số màu (sắc số χ(G)) — cả ba chiều cùng ra 4, tối ưu đã chứng minh",
+    "runs": {
+      "opl": {
+        "model": "models/1.1_graph_coloring/opl/color_min.mod",
+        "args": ["data/coloring/map6.dat"],
+        "source": "new",
+        "note": "File riêng để phần lấy mẫu chính thức ở color.mod không bị đụng vào. Mô hình dựng từ dữ liệu (dvar int color[Countries]) thay vì hardcode."
+      },
+      "docplexcp": {
+        "model": "models/1.1_graph_coloring/docplexcp/color_cp.py",
+        "args": ["data/coloring/map6.dat", "--min"],
+        "source": "new"
+      },
+      "ortools": {
+        "model": "models/1.1_graph_coloring/ortools/color_sat.py",
+        "args": ["data/coloring/map6.dat", "--min"],
+        "source": "new"
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+/* Bài 3.2 — dữ liệu ràng buộc khả dụng (availability windows).
+ *
+ * Đây là phần dữ liệu bài 3.2 thêm vào so với timetabling.mod gốc của IBM, vốn
+ * ngầm giả định mọi tài nguyên rảnh suốt kỳ.
+ *
+ * Quy ước thời gian, khớp với base.dat + large.dat:
+ *   DayDuration = 6, NumberOfDaysPerPeriod = 8  =>  Time = 0..47
+ *   ngày d chiếm t = 6d .. 6d+5 ; buổi sáng = 3 tiết đầu, buổi chiều = 3 tiết sau
+ */
+
+// RB7 — giáo viên bận
+TeacherBusySet = {
+  // Patrick (Sport) nghỉ trọn ngày 0
+  <"Patrick", 0>, <"Patrick", 1>, <"Patrick", 2>,
+  <"Patrick", 3>, <"Patrick", 4>, <"Patrick", 5>,
+
+  // Odile (Economy) bận chiều ngày 1
+  <"Odile", 9>, <"Odile", 10>, <"Odile", 11>,
+
+  // Marie-Laure (Geography, History) đi họp sáng ngày 3
+  <"Marie-Laure", 18>, <"Marie-Laure", 19>, <"Marie-Laure", 20>,
+
+  // Paul (Physics) nghỉ chiều ngày 5
+  <"Paul", 33>, <"Paul", 34>, <"Paul", 35>
+};
+
+// RB8 — lớp bận
+ClassBusySet = {
+  // Lớp Z đi thực tế sáng ngày 7
+  <"Z", 42>, <"Z", 43>, <"Z", 44>,
+
+  // Lớp X sinh hoạt lớp tiết cuối ngày 4
+  <"X", 29>
+};
+
+// RB4 — khung giờ cần tránh cho môn
+DisciplineAvoidSet = {
+  // Không xếp Sport vào tiết cuối buổi chiều các ngày 0..7
+  <"Sport", 5>,  <"Sport", 11>, <"Sport", 17>, <"Sport", 23>,
+  <"Sport", 29>, <"Sport", 35>, <"Sport", 41>, <"Sport", 47>
+};

@@ -1,0 +1,27 @@
+{
+  "problem": "1.2_nqueens",
+  "title": "N-Queens",
+  "part": 1,
+  "category": "Assignment / Labeling",
+  "objective": "CSP thuần — tìm một cấu hình khả thi, không có hàm mục tiêu",
+  "dimensions": {
+    "opl": {
+      "model": "models/1.2_nqueens/opl/nqueens.mod",
+      "args": ["data/queens/nqueens.dat"],
+      "source": "new",
+      "note": "IBM không phát hành ví dụ N-Queens bằng OPL trong bộ examples 22.2"
+    },
+    "docplexcp": {
+      "model": "models/1.2_nqueens/docplexcp/nqueens_cp.py",
+      "args": ["8"],
+      "source": "official",
+      "note": "docplex examples/cp/basic/n_queen.py"
+    },
+    "ortools": {
+      "model": "models/1.2_nqueens/ortools/nqueens_sat.py",
+      "args": ["8"],
+      "source": "official",
+      "note": "developers.google.com/optimization/cp/queens"
+    }
+  }
+}

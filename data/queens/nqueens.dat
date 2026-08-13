@@ -1,0 +1,5 @@
+/* Dữ liệu bài 1.2 N-Queens — dùng chung cho cả ba chiều.
+ * Chiều OPL đọc file này; hai chiều Python nhận n qua tham số dòng lệnh
+ * (mặc định 8) nên cùng một giá trị được dùng cho cả ba.
+ */
+n = 8;

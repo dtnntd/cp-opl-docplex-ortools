@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*:Zone.Identifier
+
+# Kết quả sinh ra được — chạy `make run-all` / `make html` là có lại
+results/*.json
+results/*.csv
+report/html/
+
+# Ví dụ chính thức của IBM, lấy về bằng sparse clone (xem PLAN.md §1)
+vendor/

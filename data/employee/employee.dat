@@ -1,0 +1,48 @@
+/* Bài 2.2 — Employee / Shift Scheduling có nguyện vọng
+ * ---------------------------------------------------------------------------
+ * DỮ LIỆU DÙNG CHUNG cho cả ba chiều (opl / docplexcp / ortools).
+ *
+ * Đây là bản chép đúng bộ dữ liệu của ví dụ chính thức Google OR-Tools
+ * "Scheduling with shift requests":
+ *     https://developers.google.com/optimization/scheduling/employee_scheduling
+ *
+ * Bản gốc mã hoá nguyện vọng bằng mảng lồng ba tầng shift_requests[n][d][s]
+ * gồm 105 số 0/1. Ở đây chuyển sang **danh sách các bộ ba được yêu cầu** — thưa
+ * hơn (20 phần tử thay vì 105), đọc được bằng mắt, và hợp với cách OPL mô tả
+ * quan hệ bằng tuple set. Hai cách hoàn toàn tương đương:
+ *
+ *     shift_requests[n][d][s] == 1   <=>   <Employees[n], Days[d], Shifts[s]> ∈ ShiftRequests
+ *
+ * Thứ tự khai báo dưới đây là thứ tự chỉ số của bản Google:
+ *     E1..E5  = nurse 0..4
+ *     Mon..Sun = day 0..6
+ *     Morning/Evening/Night = shift 0/1/2
+ *
+ * Định dạng .dat của OPL; hai chiều Python đọc đúng file này qua tools/opl_dat.py
+ * nên không tồn tại bản dữ liệu thứ hai để lệch nhau.
+ */
+
+Employees = { "E1", "E2", "E3", "E4", "E5" };
+
+Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
+Shifts = { "Morning", "Evening", "Night" };
+
+/* Nguyện vọng: <nhân viên, ngày, ca> — nhân viên MUỐN được xếp vào ca đó.
+ * 20 nguyện vọng, mỗi người 4 nguyện vọng. */
+ShiftRequests = {
+  <"E1", "Mon", "Night">,   <"E1", "Fri", "Night">,
+  <"E1", "Sat", "Evening">, <"E1", "Sun", "Night">,
+
+  <"E2", "Wed", "Evening">, <"E2", "Thu", "Evening">,
+  <"E2", "Fri", "Morning">, <"E2", "Sun", "Night">,
+
+  <"E3", "Mon", "Evening">, <"E3", "Tue", "Evening">,
+  <"E3", "Thu", "Morning">, <"E3", "Sat", "Evening">,
+
+  <"E4", "Mon", "Night">,   <"E4", "Wed", "Morning">,
+  <"E4", "Thu", "Evening">, <"E4", "Sat", "Morning">,
+
+  <"E5", "Tue", "Night">,   <"E5", "Wed", "Evening">,
+  <"E5", "Fri", "Morning">, <"E5", "Sat", "Evening">
+};

@@ -1,0 +1,62 @@
+{
+  "problem": "3.2_timetable",
+  "title": "Xếp thời khoá biểu có ràng buộc khả dụng",
+  "part": 3,
+  "category": "Scheduling / Timetabling",
+  "objective": "min makespan",
+  "baseline_reference": "models/3.2_timetable/opl/timetabling_base_reference.mod",
+  "shared_data": "Cả ba chiều đọc đúng các file .dat gốc của IBM trong data/timetable/",
+  "dimensions": {
+    "opl": {
+      "model": "models/3.2_timetable/opl/timetabling_avail.mod",
+      "args": [
+        "data/timetable/base.dat",
+        "data/timetable/large.dat",
+        "data/timetable/availability.dat"
+      ],
+      "source": "official+extended",
+      "encoding": "int Start[] + tổng có điều kiện (nguyên bản IBM)",
+      "note": "timetabling.mod nguyên bản của IBM + 44 dòng bổ sung RB7/RB8/RB4, không sửa dòng nào của bản gốc",
+      "timeout": 900
+    },
+    "docplexcp": {
+      "model": "models/3.2_timetable/docplexcp/timetable_cp.py",
+      "args": [
+        "data/timetable/base.dat",
+        "data/timetable/large.dat",
+        "data/timetable/availability.dat"
+      ],
+      "source": "new",
+      "encoding": "interval + alternative + forbid_extent (hàm bậc thang)",
+      "note": "IBM không có bản CP nào của bài này qua docplex.cp. Điểm đo duy nhất tách được ảnh hưởng của MÃ HOÁ khỏi ảnh hưởng của ENGINE.",
+      "timeout": 900
+    },
+    "ortools": {
+      "model": "models/3.2_timetable/ortools/timetable_sat.py",
+      "args": [
+        "data/timetable/base.dat",
+        "data/timetable/large.dat",
+        "data/timetable/availability.dat"
+      ],
+      "source": "new",
+      "encoding": "interval + optional interval + add_no_overlap",
+      "note": "Port đầy đủ mô hình gốc sang CP-SAT. Đã kiểm chứng chéo với chiều OPL: makespan trùng khớp ở cả 3 cấu hình (small=20, large=44, large+avail=47)",
+      "timeout": 900
+    }
+  },
+  "benchmark": {
+    "note": "Bài duy nhất có đo hiệu năng định lượng. Seed và số worker cố định để tái lập.",
+    "configs": [
+      { "name": "small", "args": ["data/timetable/base.dat", "data/timetable/small.dat"] },
+      { "name": "large", "args": ["data/timetable/base.dat", "data/timetable/large.dat"] },
+      {
+        "name": "large+avail",
+        "args": [
+          "data/timetable/base.dat",
+          "data/timetable/large.dat",
+          "data/timetable/availability.dat"
+        ]
+      }
+    ]
+  }
+}

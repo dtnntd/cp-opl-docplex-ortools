@@ -1,0 +1,11 @@
+/* Bài 3.2 — availability RỖNG.
+ *
+ * Chiều OPL bắt buộc phải có giá trị cho mọi phần tử khai bằng `...`, nên cấu
+ * hình "không có ràng buộc khả dụng" cần file này thay vì bỏ trống tham số.
+ * Chạy với file này thì timetabling_avail.mod cho kết quả trùng khít bản gốc
+ * timetabling.mod — dùng để đo chi phí của tính khả dụng.
+ */
+
+TeacherBusySet     = {};
+ClassBusySet       = {};
+DisciplineAvoidSet = {};

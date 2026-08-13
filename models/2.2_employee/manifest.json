@@ -1,0 +1,46 @@
+{
+  "problem": "2.2_employee",
+  "title": "Xếp ca nhân sự có nguyện vọng (Employee / Shift Scheduling with shift requests)",
+  "part": 2,
+  "category": "Scheduling / Rostering",
+  "objective": "max tổng số shift request được đáp ứng",
+  "shared_data": "Cả ba chiều đọc đúng một file data/employee/employee.dat; hai chiều Python đọc qua tools/opl_dat.py",
+  "ibm_cp_gap": "IBM không có bản CP nào cho bài xếp ca nhân sự — ví dụ `nurses` của cả OPL lẫn docplex đều là MILP (engine CPLEX). Xem NOTES.md mục (c).",
+  "dimensions": {
+    "opl": {
+      "model": "models/2.2_employee/opl/employee.mod",
+      "args": ["data/employee/employee.dat"],
+      "source": "new",
+      "encoding": "dvar boolean x[Employees][Days][Shifts] + tổng số học",
+      "note": "Viết mới. IBM chỉ có nurses.mod bản MILP: không có `using CP;`, dùng `dvar float+`, và .oplproject ghi rõ 'Nurses Scheduling model, MIP'.",
+      "timeout": 300
+    },
+    "docplexcp": {
+      "model": "models/2.2_employee/docplexcp/employee_cp.py",
+      "args": ["data/employee/employee.dat"],
+      "source": "new",
+      "encoding": "binary_var + tổng số học (docplex.cp không có exactly_one/at_most_one)",
+      "note": "Viết mới. Trong kho IBMDecisionOptimization/docplex, mọi file `nurses*` nằm dưới examples/mp và docs/mp — nhánh docplex.mp; examples/cp (107 file) không có bài xếp ca nào.",
+      "timeout": 300
+    },
+    "ortools": {
+      "model": "models/2.2_employee/ortools/employee_sat.py",
+      "args": ["data/employee/employee.dat"],
+      "source": "official",
+      "encoding": "new_bool_var + add_exactly_one / add_at_most_one",
+      "note": "developers.google.com/optimization/scheduling/employee_scheduling — bản 'Scheduling with shift requests'. Phần dựng mô hình giữ nguyên văn; chỉ thay nguồn dữ liệu, cố định worker/seed, và thêm dòng RESULT.",
+      "timeout": 300
+    }
+  },
+  "cross_check": {
+    "note": "Ba chiều dựng độc lập trên cùng một bộ dữ liệu và cùng ra một giá trị mục tiêu tối ưu.",
+    "objective": 13,
+    "of_total_requests": 20
+  },
+  "reproducibility": {
+    "note": "Cả ba chiều cố định 1 worker + seed 0 nên branches/fails tái lập được giữa các lần chạy (PLAN.md §2.4).",
+    "opl": "execute PARAMS { cp.param.workers = 1; cp.param.randomSeed = 0; }",
+    "docplexcp": "mdl.solve(Workers=1, RandomSeed=0)",
+    "ortools": "solver.parameters.num_search_workers = 1; solver.parameters.random_seed = 0"
+  }
+}
