@@ -9,5 +9,6 @@ nbconvert
 nbformat
 
 # Dữ liệu, bảng biểu, biểu đồ Gantt cho phần lập lịch
-pandas
+pandas>=1.4            # nbutil.frame() dùng Styler.hide(axis=...), có từ 1.4
+jinja2                 # pandas Styler cần jinja2; pandas không tự kéo về
 matplotlib

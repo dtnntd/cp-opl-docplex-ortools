@@ -1,0 +1,61 @@
+{#-
+  Template HTML cho báo cáo — kế thừa `lab` của nbconvert, chỉ sửa phần bảng.
+
+  Vì sao cần: CSS mặc định của `lab` làm bảng lệch theo ba cách, thấy rõ nhất ở
+  các bảng 8–11 cột trong báo cáo này.
+
+  1. `table-layout: fixed` — bề rộng cột do HÀNG ĐẦU quyết định, mọi hàng sau bị
+     ép theo. Bảng 10 cột vì thế chia đều bề rộng bất kể nội dung: cột "chiều"
+     (5 ký tự) thừa chỗ, cột đường dẫn model bị bẻ xuống ba bốn dòng.
+  2. Bảng markdown `margin-left/right: auto` (căn giữa) còn bảng DataFrame
+     `margin-left: 0` (căn trái) — hai loại bảng lệch nhau và lệch cả so với
+     đoạn văn quanh nó.
+  3. Ô của DataFrame bị `text-align: right` cho TẤT CẢ các cột, kể cả cột chữ
+     (tên file, trạng thái), nên mép trái của những cột đó lởm chởm.
+
+  Khối `html_head_css` nằm cuối `html_head` trong template gốc nên CSS ở đây
+  ghi đè được `notebook_css`. Chỉ đụng tới bảng, phần còn lại giữ nguyên `lab`.
+-#}
+{% extends 'lab/index.html.j2' %}
+
+{% block html_head_css %}
+{{ super() }}
+<style type="text/css">
+/* --- 1. Bề rộng cột theo nội dung, bảng rộng thì cuộn trong khung --------- */
+.jp-RenderedHTMLCommon table {
+  table-layout: auto;
+  /* `display: block` để `overflow-x` có tác dụng trên chính thẻ table:
+     bảng quá rộng sẽ cuộn ngang trong khung của nó thay vì đẩy tràn cả trang. */
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  /* --- 2. Căn trái, thẳng hàng với đoạn văn và với bảng DataFrame --------- */
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.jp-RenderedHTMLCommon td,
+.jp-RenderedHTMLCommon th {
+  padding: 0.4em 0.75em;
+  /* Chữ số cùng bề rộng thì cột số thẳng cột dù căn trái. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 3. Chữ căn trái ở cả hai loại bảng ---------------------------------- */
+:not(.jp-RenderedMarkdown).jp-RenderedHTMLCommon td,
+:not(.jp-RenderedMarkdown).jp-RenderedHTMLCommon th,
+:not(.jp-RenderedMarkdown).jp-RenderedHTMLCommon tr,
+.dataframe thead th {
+  text-align: left;
+}
+
+/* --- Kẻ ngang cho dễ dò hàng ngang trên bảng nhiều cột ------------------- */
+.jp-RenderedHTMLCommon tbody tr {
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+}
+.jp-RenderedHTMLCommon thead th {
+  border-bottom: 2px solid var(--jp-border-color1);
+}
+</style>
+{% endblock html_head_css %}

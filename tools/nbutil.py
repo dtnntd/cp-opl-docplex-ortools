@@ -128,6 +128,58 @@ _RUNS: dict[str, list] = {}
 _SOURCE_MARK = {"official": "✅", "new": "✍️", "official+extended": "✅+✍️"}
 
 
+def _fmt(v):
+    """Định dạng một ô cho `frame()`.
+
+    Styler mặc định in float với 6 chữ số thập phân cố định — thời gian giải hoá
+    thành `0.021000`, tỉ lệ thành `5.430000`. `%g` cắt số 0 thừa nên `0.023`,
+    `0.0017`, `645.91` giữ nguyên bề ngoài như bảng pandas thường.
+    """
+    return f"{v:g}" if isinstance(v, float) else v
+
+
+def frame(rows: list[dict]):
+    """Bảng từ danh sách dict — DataFrame thường, chỉ khác ở cách HIỂN THỊ.
+
+    Hai chỗ sửa so với `_repr_html_` mặc định của pandas:
+
+    * **Cột số căn phải, cột chữ căn trái.** Mặc định của nbconvert căn PHẢI mọi
+      ô, kể cả cột chữ (tên bài, trạng thái) nên mép trái của các cột đó lởm
+      chởm. Căn trái tất cả thì hết lởm chởm nhưng lại không dò được độ lớn của
+      số: 201 và 141455 bắt đầu ở cùng một cột, phải đếm chữ số mới biết cái nào
+      lớn hơn. Chia theo kiểu dữ liệu mới đúng cả hai.
+    * **Bỏ cột chỉ số.** RangeIndex 0,1,2,… là hiện vật của pandas, trong báo cáo
+      nó chỉ là một cột số vô nghĩa nằm trước cột đầu tiên.
+
+    Vẫn là DataFrame nên mọi thao tác pandas khác giữ nguyên; chỉ `_repr_html_`
+    bị đổi, và cũng chỉ đổi khi có `pandas.io.formats.style` (cần jinja2).
+    """
+    try:
+        import pandas as pd
+    except ImportError:
+        return rows
+
+    class _Aligned(pd.DataFrame):
+        @property
+        def _constructor(self):
+            return _Aligned
+
+        def _repr_html_(self):
+            try:
+                numeric = list(self.select_dtypes("number").columns)
+                styler = self.style.hide(axis="index").format(_fmt, na_rep="—")
+                if numeric:
+                    styler = styler.set_table_styles(
+                        {c: [{"selector": "", "props": [("text-align", "right")]}]
+                         for c in numeric},
+                        axis=0, overwrite=False)
+                return styler.to_html()
+            except ImportError:      # thiếu jinja2 -> quay về bảng thường
+                return super()._repr_html_()
+
+    return _Aligned(rows)
+
+
 def runs(problem: str, timeout: int = 900, refresh: bool = False) -> list:
     """Chạy cả ba chiều của một bài (kèm bản phụ trợ nếu có), ghi nhớ kết quả.
 
@@ -161,12 +213,7 @@ def run_table(problem: str, timeout: int = 900):
             "fails/conflicts": rec.fails,
         }
         rows.append(row)
-    try:
-        import pandas as pd
-
-        return pd.DataFrame(rows)
-    except ImportError:
-        return rows
+    return frame(rows)
 
 
 def cross_check(problem: str, timeout: int = 900):
@@ -300,12 +347,7 @@ def axis_tables(timeout: int = 900):
                         "CP-SAT" if (sat.solve_time_s or 0) < (cpo.solve_time_s or 0)
                         else "CP Optimizer"),
                 })
-    try:
-        import pandas as pd
-
-        return pd.DataFrame(lang), pd.DataFrame(eng)
-    except ImportError:
-        return lang, eng
+    return frame(lang), frame(eng)
 
 
 def show_source_matrix():
@@ -328,6 +370,6 @@ def show_source_matrix():
 
 __all__ = [
     "problems", "manifest", "notes_section", "show_notes", "show_code",
-    "show_dimension_code", "runs", "run_table", "cross_check", "axis_tables",
+    "show_dimension_code", "runs", "frame", "run_table", "cross_check", "axis_tables",
     "show_source_matrix", "ENGINE", "LANGUAGE", "ROOT",
 ]

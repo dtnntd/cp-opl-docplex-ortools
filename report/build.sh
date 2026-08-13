@@ -32,7 +32,13 @@ if [[ "${SKIP_EXECUTE:-0}" != "1" ]]; then
 fi
 
 echo "==> Xuất HTML"
-jupyter nbconvert --to html --output-dir "$OUT_DIR" "${notebooks[@]}"
+# Template riêng: kế thừa `lab`, chỉ đè CSS bảng. Lý do ở report/nbtemplate/
+# cpreport/index.html.j2 — CSS gốc đặt table-layout:fixed nên bảng nhiều cột
+# bị chia đều bề rộng bất kể nội dung.
+jupyter nbconvert --to html \
+  --TemplateExporter.extra_template_basedirs="$ROOT/report/nbtemplate" \
+  --template cpreport \
+  --output-dir "$OUT_DIR" "${notebooks[@]}"
 
 # ---- trang mục lục ---------------------------------------------------------
 {
