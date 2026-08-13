@@ -18,6 +18,31 @@
 -#}
 {% extends 'lab/index.html.j2' %}
 
+{#-
+  Tắt tự ngắt dòng công thức.
+
+  Cấu hình gốc của nbconvert đặt `CommonHTML.linebreaks.automatic = true`. Trong
+  ô bảng, MathJax đo bề rộng khả dụng lúc dựng — lúc đó cột còn hẹp — rồi bẻ công
+  thức thành nhiều dòng và bọc kết quả trong `.mjx-full-width` (`display:
+  table-cell; width: 10000em`). Hai thứ đó cộng lại phá bảng: công thức xếp dọc
+  từng ký hiệu một, còn cột bên cạnh bị ép xuống bề rộng một chữ.
+
+  Tắt cờ này thì công thức giữ nguyên một dòng, bảng đo được bề rộng thật của
+  nó. Đổi lại, công thức display quá dài không tự xuống dòng nữa — bù bằng
+  `overflow-x: auto` cho `.MJXc-display` ở khối CSS bên dưới.
+
+  `MathJax.Hub.Config` gộp cấu hình chứ không thay thế, nên chỉ cờ này bị đổi;
+  đánh số phương trình theo AMS (`\tag{}` trong các NOTES.md) giữ nguyên.
+-#}
+{% block html_head_js_mathjax %}
+{{ super() }}
+<script type="text/x-mathjax-config">
+if (window.MathJax) {
+    MathJax.Hub.Config({ CommonHTML: { linebreaks: { automatic: false } } });
+}
+</script>
+{% endblock html_head_js_mathjax %}
+
 {% block html_head_css %}
 {{ super() }}
 <style type="text/css">
@@ -48,6 +73,33 @@
 :not(.jp-RenderedMarkdown).jp-RenderedHTMLCommon tr,
 .dataframe thead th {
   text-align: left;
+}
+
+/* --- Công thức toán trong ô bảng ----------------------------------------
+   MathJax v2 bọc công thức trong `.mjx-full-width`, luật của nó là
+       .mjx-full-width { display: table-cell !important; width: 10000em }
+   — mẹo để căn giữa công thức bằng cách đòi bề rộng vô hạn. Luật này do
+   JavaScript của MathJax chèn lúc chạy nên không thấy trong file HTML tĩnh.
+
+   `table-layout: fixed` cũ ấn định bề rộng cột từ trước nên nuốt chửng nó.
+   Với `auto`, trình duyệt tin con số 10000em và dồn gần hết bề rộng cho cột
+   chứa công thức, cột còn lại bị ép xuống bề rộng một chữ.
+
+   Chỉ vô hiệu hoá TRONG ô bảng; công thức display giữa bài vẫn căn giữa như cũ.
+   Cần `!important` vì luật gốc có `!important`, và cần thêm hai lớp tổ tiên vì
+   stylesheet của MathJax chèn sau stylesheet này. */
+.jp-RenderedHTMLCommon td .mjx-full-width,
+.jp-RenderedHTMLCommon th .mjx-full-width {
+  display: inline-block !important;
+  width: auto !important;
+  text-align: left !important;
+}
+
+/* Đã tắt tự ngắt dòng (xem khối html_head_js_mathjax), nên công thức display
+   quá dài sẽ tràn thay vì xuống dòng — cho nó cuộn ngang tại chỗ. */
+.jp-RenderedHTMLCommon .MJXc-display {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 /* --- Kẻ ngang cho dễ dò hàng ngang trên bảng nhiều cột ------------------- */
