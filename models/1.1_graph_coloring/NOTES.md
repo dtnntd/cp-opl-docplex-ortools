@@ -72,19 +72,19 @@ trong cách mã hoá, vì $x_v$ là một biến đơn trị nên tự động n
 Đây là nét đặc trưng của CP đã gặp ở bài 1.2 (biến $q_i$ nuốt luôn ràng buộc "mỗi
 hàng một hậu"): **chọn cách mã hoá tốt thì một phần ràng buộc tự biến mất.**
 
-> **Đối chiếu với mã hoá nhị phân kiểu MILP.** Cách viết quen thuộc của quy hoạch
-> nguyên là $y_{v,k}\in\{0,1\}$ ("đỉnh $v$ mang màu $k$"), và khi đó phải thêm
-> $\sum_{k\in\mathcal{K}} y_{v,k}=1\ \forall v$ cùng $y_{u,k}+y_{v,k}\le 1\ \forall\{u,v\}\in E,\forall k$.
->
-> | | biến | ràng buộc | không gian tìm kiếm |
-> |---|---|---|---|
-> | CP — biến miền $\mathcal{K}$ | $n=6$ | $m=9$ | $K^{n}=4^6=4\,096$ ($\log_2 = 12$) |
-> | MILP — biến nhị phân | $nK=24$ | $n+mK=42$ | $2^{24}$ ($\log_2 = 24$) |
->
-> Cùng một bài toán, mã hoá biến nguyên cho không gian tìm kiếm nhỏ hơn hẳn. Với
-> bài 6 đỉnh thì chênh lệch này vô nghĩa, nhưng nó chính là lý do PLAN.md §2.1 chốt
-> **bỏ mã hoá nhị phân** ở bài 3.2 để lọt trần $2^{1000}$ của Community Edition.
-> Ở bài này $\log_2$ không gian tìm kiếm chỉ là **12** — cách trần 1000 rất xa.
+**Đối chiếu với mã hoá nhị phân kiểu MILP.** Cách viết quen thuộc của quy hoạch
+nguyên là $y_{v,k}\in\{0,1\}$ ("đỉnh $v$ mang màu $k$"), và khi đó phải thêm
+$\sum_{k\in\mathcal{K}} y_{v,k}=1\ \forall v$ cùng $y_{u,k}+y_{v,k}\le 1\ \forall\{u,v\}\in E,\forall k$.
+
+| | biến | ràng buộc | không gian tìm kiếm |
+|---|---|---|---|
+| CP — biến miền $\mathcal{K}$ | $n=6$ | $m=9$ | $K^{n}=4^6=4\,096$ ($\log_2 = 12$) |
+| MILP — biến nhị phân | $nK=24$ | $n+mK=42$ | $2^{24}$ ($\log_2 = 24$) |
+
+Cùng một bài toán, mã hoá biến nguyên cho không gian tìm kiếm nhỏ hơn hẳn. Với
+bài 6 đỉnh thì chênh lệch này vô nghĩa, nhưng nó chính là lý do PLAN.md §2.1 chốt
+**bỏ mã hoá nhị phân** ở bài 3.2 để lọt trần $2^{1000}$ của Community Edition.
+Ở bài này $\log_2$ không gian tìm kiếm chỉ là **12** — cách trần 1000 rất xa.
 
 ### Ràng buộc
 

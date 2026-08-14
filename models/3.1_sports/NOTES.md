@@ -60,7 +60,7 @@ việc di chuyển của các đội.
 | $\mathcal{G}$ | $\{1,\dots,\gamma\}$, $\gamma=n/2$ | tập chỗ đá trong một tuần |
 | $\mathcal{M}$ | $\{1,\dots,M\}$, $M=n(n-1)$ | tập **trận** — mỗi cặp có thứ tự (nhà, khách) một trận |
 | $\mathcal{S}$ | $\{1,\dots,M\}$ | tập **chỗ đá** của cả mùa, đánh số phẳng qua các tuần |
-| $\mathcal{P}$ | $\{\{i,j\}: i,j\in\mathcal{T},\ i<j\}$ | tập cặp đối thủ, $|\mathcal{P}|=\binom n2$ |
+| $\mathcal{P}$ | $\{\{i,j\}: i,j\in\mathcal{T},\ i<j\}$ | tập cặp đối thủ, $\lvert\mathcal{P}\rvert=\binom n2$ |
 
 Hai tập $\mathcal{M}$ và $\mathcal{S}$ **cùng lực lượng** $M$ — đó là điều kiện để
 ràng buộc song ánh (C3) dùng được.
