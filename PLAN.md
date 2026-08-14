@@ -104,10 +104,20 @@ Cùng model N-Queens n=8, hai lần chạy cho `branches` = 475 rồi 0 — CP-S
 luồng, worker nào về đích trước thì số liệu theo worker đó.
 
 ⇒ Phần benchmark bài 3.2 **bắt buộc** cố định `num_search_workers=1` và
-`random_seed`, chạy lặp ≥5 lần lấy trung vị. Không làm vậy thì bảng số liệu vô nghĩa.
+`random_seed`, và mỗi điểm đo phải là **trung vị của ít nhất 5 lần chạy** — 5 là
+sàn, không phải mặc định tuỳ chỉnh được xuống thấp hơn. Không làm vậy thì bảng số
+liệu vô nghĩa. Phạm vi đo đầy đủ (**4 cấu hình**) đặc tả ở §WP6.
 
 Ngoài ra `fails` (CP Optimizer) và `conflicts` (CP-SAT) đếm hai thứ khác nhau —
 báo cáo phải nói rõ là **không so trực tiếp**, chỉ so trong cùng một engine.
+
+**Quy ước đọc số của toàn báo cáo.** Số nhánh và số fails/conflicts là **tất định**,
+trích được chính xác tới từng đơn vị. Thời gian thì không: nó là **trung vị 5 lần
+chạy trên một máy cụ thể** và dao động cỡ 10 % theo tải, nên hai lần dựng báo cáo
+cho hai con số khác nhau ở chữ số cuối. ⇒ Mọi kết luận phải dựa trên **bậc độ lớn
+và tỉ lệ**, không dựa trên chữ số cuối; và bảng nào quyết bằng một lần chạy duy nhất
+thì phải từ chối phân thắng bại khi chênh lệch nằm trong nhiễu — `axis_tables()`
+ghi "≈ ngang nhau" dưới ngưỡng `NEGLIGIBLE_TIME_DIFF` của `tools/nbutil.py`.
 
 ### 2.5 `timetabling.mod` giàu hơn brief giả định — và mở rộng được
 
@@ -123,10 +133,10 @@ Thứ nó thật sự thiếu đúng là **availability windows** — như brief
 **Đã kiểm chứng bằng cách chạy thật** (bộ `base.dat` + `large.dat`, 3 lớp, 8 giáo
 viên, 8 phòng, 8 ngày × 6 tiết):
 
-| Mô hình | Biến | Ràng buộc | log₂ không gian | Makespan | Thời gian (trung vị 3 lần) |
+| Mô hình | Biến | Ràng buộc | log₂ không gian | Makespan | Thời gian (trung vị 5 lần) |
 |---|---|---|---|---|---|
-| `timetabling.mod` gốc | 449 | 2 120 | 786.4 | 44 (tối ưu) | 17.2 s |
-| + RB7/RB8/RB4 availability | 449 | 3 947 | **780.3** | 47 (tối ưu) | **7.7 s** |
+| `timetabling.mod` gốc | 449 | 2 120 | 786.4 | 44 (tối ưu) | 17.94 s |
+| + RB7/RB8/RB4 availability | 449 | 3 947 | **780.3** | 47 (tối ưu) | **8.60 s** |
 
 Hai điều đáng chú ý:
 
@@ -135,12 +145,17 @@ Hai điều đáng chú ý:
    ràng buộc tăng gần gấp đôi nhưng đại lượng bị Community Edition tính trần là
    *không gian tìm kiếm*, không phải *số ràng buộc*. ⇒ Còn nhiều chỗ để thêm ràng buộc.
 2. **Cái giá của tính khả dụng nằm ở chất lượng lời giải, không ở thời gian giải.**
-   Makespan xấu đi 44 → 47, nhưng thời gian giải lại *giảm* 17.2 s → 7.7 s: miền
+   Makespan xấu đi 44 → 47, nhưng thời gian giải lại *giảm* 17.94 s → 8.60 s: miền
    bị cắt bớt nên engine tìm và chứng minh tối ưu nhanh hơn. Ràng buộc thực tế hơn
    làm lịch dài ra, chứ không làm bài toán khó hơn về mặt tính toán.
 
 Phần mở rộng được viết dưới dạng **chèn thêm 44 dòng, không sửa một dòng nào** của
 bản gốc IBM (`diff` xác nhận), nên trong báo cáo có thể trình bày đúng phần delta.
+
+> 📎 **Không có §2.6** — đánh số nhảy từ 2.5 sang 2.7 là *cố ý*. Số hiệu §2.7 và
+> §2.8 đã được trích dẫn trong mã (`tools/runner.py`, `tools/nbutil.py`) và trong
+> các `NOTES.md`; đánh số lại sẽ làm hỏng những tham chiếu đó. Không có mục nào bị
+> mất.
 
 ### 2.7 Bẫy lớn nhất gặp phải: hai mẫu chính thức trùng tên nhưng khác bài
 
@@ -241,7 +256,7 @@ chiều và các khác biệt ngôn ngữ/engine quan sát được) + dữ li�
 | Gói | Bài | OPL | DOcplex.cp | OR-Tools | Ghi chú thi công |
 |---|---|---|---|---|---|
 | **WP1** | 1.1 Tô màu | ✅ `color.mod` (cục bộ) | ✅ `basic/color.py` | ✍️ viết mới | Dữ liệu 6 nước châu Âu, 4 màu. Cần script sinh `.dat` từ JSON để 3 chiều chung dữ liệu |
-| **WP2** | 1.2 N-Queens | ✍️ **đã xong** | ✅ **đã xong** | ✅ **đã xong** | Còn thiếu `NOTES.md` |
+| **WP2** | 1.2 N-Queens | ✍️ **đã xong** | ✅ **đã xong** | ✅ **đã xong** | ✅ **xong cả gói** — `NOTES.md` đã có (182 dòng) |
 | **WP3** | 2.1 Job-shop | ✅ `sched_jobshop.mod` | ✅ `visu/job_shop_basic.py` | ✍️ viết mới | **Bài trọng tâm** — bài duy nhất có sẵn cả 3 bản chính thức. Dữ liệu chung: `ft06`. Thêm Gantt |
 | **WP4** | 2.2 Employee | ✍️ viết mới | ✍️ viết mới | ✅ mẫu Google | IBM không có bản CP — chỉ có `nurses` bản MILP. Đây là **khoảng trống của hệ IBM**, một kết luận của báo cáo |
 | **WP5** | 3.1 Sports | ✅ `sports.mod` | ✅ `jupyter/sports_scheduling` | ✍️ viết mới | ⚠️ **hai mẫu chính thức là hai bài toán khác nhau** — xem §2.7 |
@@ -258,9 +273,14 @@ chiều bổ sung availability lên trên đó. Cách này tốt hơn hẳn phư
 
 | Chiều | Phạm vi | Mã hoá | Trạng thái |
 |---|---|---|---|
-| OPL | **đầy đủ** — `timetabling.mod` nguyên bản + 44 dòng RB7/RB8/RB4 | int `Start[]` + tổng có điều kiện (nguyên bản IBM) | ✅ **xong, chạy tối ưu** |
-| OR-Tools | **đầy đủ** — port trọn mô hình gốc + availability | **interval + `AddNoOverlap`** | cần làm |
-| DOcplex.cp | **linh hoạt** — bám phần cốt lõi, không nhất thiết mọi ràng buộc | **interval + `no_overlap`** | cần làm |
+| OPL | **đầy đủ** — `timetabling.mod` nguyên bản + 44 dòng RB7/RB8/RB4 | int `Start[]` + tổng có điều kiện (nguyên bản IBM) | ✅ **xong, chạy tối ưu** — makespan **47**, 8.60 s |
+| OR-Tools | **đầy đủ** — port trọn mô hình gốc + availability | **interval + `AddNoOverlap`** | ✅ **xong, chạy tối ưu** — makespan **47**, 2.42 s |
+| DOcplex.cp | **linh hoạt** — bám phần cốt lõi, không nhất thiết mọi ràng buộc | **interval + `no_overlap`** | ✅ **xong, chạy tối ưu** — makespan **47**, 1.50 s |
+
+Ba chiều **cùng cho makespan tối ưu 47** ⇒ kiểm chứng chéo của WP6 đã đạt
+(nguồn: `results/bench.csv`, cấu hình `large+avail`, trung vị 5 lần chạy. Chiều
+OR-Tools nay mặc định 1 worker + seed 0 theo §2.4; `results/runs.csv` vẫn là bản
+chụp cũ chạy 8 worker, cần `make run-all` lại).
 
 Hai chiều Python mô hình hoá "tài nguyên dùng một lần tại mỗi thời điểm" bằng
 **biến interval + noOverlap**, thay cho tổng có điều kiện của bản OPL gốc. Đó vừa
@@ -274,8 +294,12 @@ IBM (`data/timetable/*.dat`) qua `tools/opl_dat.py` — một trình đọc đ�
 viết cho dự án. Không duy trì bản JSON song song, nên không có đường nào để dữ
 liệu ba chiều lệch nhau.
 
-Benchmark WP6 đo trên 4 cấu hình: {gốc, +availability} × {small, large}, mỗi cấu
-hình × 3 chiều, seed cố định, lấy trung vị 5 lần chạy (§2.4).
+**Đặc tả benchmark WP6.** Đo trên **đúng 4 cấu hình** — tích Descartes
+{gốc, +availability} × {small, large}, tức `small`, `small+avail`, `large`,
+`large+avail` — mỗi cấu hình × 3 chiều = 12 điểm đo. Seed cố định, mỗi điểm đo lấy
+**trung vị của ≥5 lần chạy** (§2.4). Bốn cấu hình và ngưỡng 5 lần chạy đều là bắt
+buộc: bỏ bớt một cấu hình thì mất một ô của bảng 2×2, và dưới 5 lần chạy thì trung
+vị không lọc nổi nhiễu của CP-SAT.
 
 Thứ tự đề nghị: **WP2 → WP1 → WP3 → WP5 → WP4 → WP6**. Lý do: làm các bài có sẵn
 mẫu trước để chốt khuôn `NOTES.md` và cách trình bày, để dành hai bài phải tự viết
@@ -309,12 +333,29 @@ ngay bên dưới, không có đường nào để hai thứ lệch nhau.
 
 - `report/build.sh`: `nbconvert --execute` từng notebook → HTML → gộp `index.html`.
 - Kiểm chứng cuối:
-  - [ ] cả 5 notebook chạy sạch từ kernel mới
-  - [ ] `make run-all` xanh toàn bộ 18 model
-  - [ ] không file nào import `docplex.mp`
-  - [ ] mọi link trích dẫn còn sống
-  - [ ] bảng ✅/✍️ trong báo cáo khớp `manifest.json`
-  - [ ] mọi số liệu benchmark tái lập được (seed cố định)
+  - [x] cả 5 notebook chạy sạch từ kernel mới *(`make html` ngày 2026-08-15 chạy
+        `nbconvert --execute` cả 5 notebook rồi xuất HTML: **0 ô lỗi**, 9 hình
+        sinh ra đủ (0/2/2/2/3) và có mặt trong HTML)*
+  - [x] `make run-all` xanh toàn bộ 18 model *(`results/runs.csv`: 18/18 hàng `ok=True`,
+        6 bài × 3 chiều; `make check` xanh cả ba engine)*
+  - [x] không file nào import `docplex.mp` *(quét toàn repo: chỉ nhắc tên trong văn
+        xuôi để phân biệt paradigm, không có import nào)*
+  - [x] mọi link trích dẫn còn sống *(21 URL trích trong `README.md`, `PLAN.md`,
+        `CP_report_brief.md` và 6 `NOTES.md` — kiểm ngày 2026-08-14, tất cả trả
+        HTTP 200 sau khi theo redirect; trang IBM docs có lúc trả 503 tạm thời,
+        thử lại 3 lần đều 200)*
+  - [x] bảng ✅/✍️ trong báo cáo khớp `manifest.json` *(bảng được **sinh** từ manifest
+        qua `tools/nbutil.py::show_source_matrix`, không có đường nào để lệch)*
+  - [x] mọi số liệu benchmark tái lập được (seed cố định) *(`tools/bench_timetable.py`
+        nay đủ **4 cấu hình / 5 lần chạy**; `results/bench.csv` đo lại toàn bộ ở
+        cấu hình 1 worker + seed cố định — **12/12 ô tất định**, 5/5 lần trùng khít
+        `branches`/`fails`. Mọi model CP-SAT của 6 bài đều đã cố định worker + seed.
+        `results/runs.csv` đã chạy lại bằng `make run-all` ngày 2026-08-15 nên
+        không còn số của bản 8 worker — xem §WP6)*
+  - [x] HTML xuất ra đọc được độc lập *(`report/html/` dựng lại ngày 2026-08-15,
+        mọi hình nhúng thẳng dạng `data:image/png` nên mở bằng trình duyệt là đọc
+        được, không cần chạy lại notebook. **Chưa đẩy lên `gh-pages`** — nhánh đó
+        vẫn là bản 2026-08-13, chạy `make pages` để đồng bộ)*
 
 ---
 
@@ -331,10 +372,10 @@ Báo cáo coi là xong khi:
 4. Mỗi bài chỉ rõ chiều nào lấy mẫu chính thức, chiều nào viết mới, kèm nguồn.
 5. **Mỗi bài có kiểm chứng chéo**: ba chiều cho cùng nghiệm tối ưu (hoặc cùng kết
    luận khả thi). Không có bước này thì mọi so sánh hiệu năng đều vô nghĩa.
-4. Có ít nhất một dẫn chứng **khác biệt do ngôn ngữ** (OPL vs DOcplex.cp, cùng
+6. Có ít nhất một dẫn chứng **khác biệt do ngôn ngữ** (OPL vs DOcplex.cp, cùng
    engine) và một dẫn chứng **khác biệt do engine** (DOcplex.cp vs OR-Tools, cùng
    ngôn ngữ) — nêu cụ thể, không nói chung chung.
-5. HTML xuất ra đọc được độc lập, không cần chạy lại notebook.
+7. HTML xuất ra đọc được độc lập, không cần chạy lại notebook.
 
 ---
 
@@ -344,7 +385,7 @@ Báo cáo coi là xong khi:
 |---|---|---|
 | ~~Trần 2^1000 chặn bài 3.2~~ | ~~Cao~~ → **Đã loại** | Đo thật: bộ large + availability chỉ dùng 780/1000. Dùng mã hoá biến nguyên là đủ (§2.1, §2.5) |
 | Hai chiều Python của WP6 dùng mã hoá khác bản OPL ⇒ so sánh kém chặt | Trung bình | Chủ động biến thành nội dung: nêu rõ ba cách mã hoá và lý do (§WP6) |
-| ~~`sports.mod` dùng ràng buộc CP-SAT không có tương đương~~ | ~~Trung bình~~ → **Đã đo, nhẹ hơn dự đoán** | CP-SAT có sẵn 3/4; chỉ thiếu `count`. Rào cản thật là **không reify được biểu thức tại chỗ** (§2.7) |
+| ~~`sports.mod` dùng ràng buộc CP-SAT không có tương đương~~ | ~~Trung bình~~ → **Đã đo, nhẹ hơn dự đoán** | CP-SAT có sẵn 3/4; chỉ thiếu `count`. Rào cản thật là **không reify được biểu thức tại chỗ** (§2.8) |
 | Hai mẫu chính thức cùng tên nhưng khác bài (gặp ở 2.1 và 3.1) | **Cao** | Luôn đọc và chạy cả hai trước khi coi là cùng một bài; ghi `variant` vào `manifest.json` (§2.7) |
 | Số liệu CP-SAT không tái lập | Trung bình | Cố định worker + seed, lấy trung vị (§2.4) |
 | `job_shop_basic.py` phụ thuộc module `visu` (matplotlib) | Thấp | Đã có matplotlib; nếu vướng thì tách phần vẽ ra khỏi phần giải |

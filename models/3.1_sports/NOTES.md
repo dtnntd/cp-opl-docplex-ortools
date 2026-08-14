@@ -396,20 +396,23 @@ bài giàu tupleset và range (3.1); Python thắng ở bài cần mảng biểu
 | | Engine | Obj | Biến | Thời gian | Nhánh | Fails / Conflicts |
 |---|---|---|---|---|---|---|
 | `sports_portA_cp.py` | CP Optimizer | **12** | 216 | 2.37 s | 850 352 | 429 850 |
-| `sports_sat.py` (8 worker) | CP-SAT | **12** | 501 | **0.78 s** | 1 350 | 0 |
-| `sports_sat.py` (1 worker, seed 0) | CP-SAT | **12** | 501 | 2.59 s | 80 264 | 9 150 |
+| `sports_sat.py` (`--workers 8`) | CP-SAT | **12** | 501 | **0.78 s** | 1 350 | 0 |
+| `sports_sat.py` (**mặc định**: 1 worker, seed 0) | CP-SAT | **12** | 501 | 3.06 s | 80 264 | 9 150 |
+
+> Từ nay `sports_sat.py` **mặc định** chạy `--workers 1 --seed 0`; muốn số liệu 8
+> worker thì phải truyền cờ tường minh. Cột thời gian là trung vị 3 lần chạy.
 
 > `fails` của CP Optimizer và `conflicts` của CP-SAT đếm hai thứ khác nhau, chỉ so
 > được trong cùng một engine (xem `README.md`).
 
 **1. Hai lối tìm kiếm khác hẳn nhau.** CP-SAT một worker duyệt **80 264** nhánh,
-CP Optimizer duyệt **850 352** — gấp **10.6 lần** — mà hai bên về đích gần như cùng
-lúc (2.59 s so với 2.37 s). CP Optimizer duyệt ồ ạt với chi phí mỗi nhánh rất rẻ
+CP Optimizer duyệt **850 352** — gấp **10.6 lần** — mà hai bên về đích cùng cỡ thời
+gian (3.06 s so với 2.37 s). CP Optimizer duyệt ồ ạt với chi phí mỗi nhánh rất rẻ
 (**359 000 nhánh/giây**); CP-SAT duyệt ít hơn hẳn nhờ học mệnh đề xung đột nhưng mỗi
-nhánh đắt hơn (**31 000 nhánh/giây**). Đúng cùng một kết luận đã thấy ở bài 3.2.
+nhánh đắt hơn (**26 000 nhánh/giây**). Đúng cùng một kết luận đã thấy ở bài 3.2.
 
 **2. Ưu thế của CP-SAT ở đây là ĐA LUỒNG, không phải mỗi-nhánh-thông-minh-hơn.**
-Bật 8 worker, CP-SAT về đích trong 0.78 s và chỉ duyệt ~1 350 nhánh — nhanh hơn 3.3×
+Bật 8 worker, CP-SAT về đích trong 0.78 s và chỉ duyệt ~1 350 nhánh — nhanh hơn 3.9×
 so với chính nó chạy một luồng. Các worker chạy chiến lược khác nhau (LNS, no-LP,
 core-based…) và worker nào gặp may thì kéo cả nhóm về đích. CP Optimizer bản
 Community cũng dùng 16 worker song song (log ghi rõ) nhưng không thu được lợi tương
@@ -418,9 +421,9 @@ Community cũng dùng 16 worker song song (log ghi rõ) nhưng không thu đư�
 **3. Giá phải trả: số liệu CP-SAT không tái lập được.** Ba lần chạy 8 worker cho
 **826 / 1 350 / 2 648** nhánh và **0 / 0 / 41** conflicts, trong khi objective và
 thời gian gần như không đổi. Cố định `num_workers=1` + `random_seed=0` thì số liệu
-tất định tuyệt đối (80 264 / 9 150 ở cả ba lần). Đây là **xác nhận độc lập** cho
-`PLAN.md` §2.4 trên một bài toán thứ hai ⇒ mọi bảng benchmark của báo cáo bắt buộc
-phải cố định worker và seed.
+tất định tuyệt đối (**80 264 / 9 150** ở cả ba lần chạy liên tiếp). Đây là **xác nhận
+độc lập** cho `PLAN.md` §2.4 trên một bài toán thứ hai ⇒ mọi bảng benchmark của báo
+cáo bắt buộc phải cố định worker và seed, và đó là **mặc định** của `sports_sat.py`.
 
 ### d.4 — Trần Community Edition: chỗ CP-SAT thắng tuyệt đối
 
@@ -429,9 +432,18 @@ CP Optimizer đều **không chạy nổi bản gốc**:
 
 | $n$ | Tuần | log₂ KGTK | OPL / DOcplex.cp (CP Optimizer Community) | OR-Tools (CP-SAT) |
 |---|---|---|---|---|
-| **6** | 10 | **510.6** (đo được) | ✅ tối ưu **12** — 1.51 s | ✅ tối ưu **12** — 0.78 s |
-| 8 | 14 | ≈1 090 (ước tính) | ❌ `FATAL[ENGINE_001]: Problem size limit exceeded` | ✅ tối ưu **16** — 14.8 s |
-| **10** *(cỡ bản gốc IBM)* | 18 | ≈1 925 (ước tính) | ❌ `FATAL[ENGINE_001]` | ✅ tối ưu **16** — 17.9 s |
+| **6** | 10 | **510.6** (đo được) | ✅ tối ưu **12** — 1.51 s | ✅ tối ưu **12** — 3.06 s *(mặc định 1 worker)* / 0.78 s *(`--workers 8`)* |
+| 8 | 14 | ≈1 090 (ước tính) | ❌ `FATAL[ENGINE_001]: Problem size limit exceeded` | ✅ tối ưu **16** — 14.8 s, **chỉ với `--workers 8`** |
+| **10** *(cỡ bản gốc IBM)* | 18 | ≈1 925 (ước tính) | ❌ `FATAL[ENGINE_001]` | ✅ tối ưu **16** — 17.9 s, **chỉ với `--workers 8`** |
+
+> ⚠️ **Hai dòng $n=8$ và $n=10$ chỉ đạt được nhờ ĐA LUỒNG.** Chạy đúng cấu hình tái
+> lập (mặc định 1 worker, seed 0, `--time-limit 300`) thì CP-SAT **không đóng nổi**
+> hai cỡ bài này: $n=8$ chạm giới hạn 300 s ở trạng thái `FEASIBLE` với objective 16
+> (1 822 928 nhánh, 594 403 conflicts) — tức tìm ra lời giải tối ưu nhưng **không
+> chứng minh được**; $n=10$ chạm 300 s ở `FEASIBLE` với objective **28**, còn xa
+> nghiệm 16. Vì vậy hai dòng này **không** dùng chung cấu hình với bảng d.3 và không
+> vào bất kỳ bảng benchmark tái lập nào — chúng là bằng chứng về *trần license*,
+> không phải điểm đo hiệu năng.
 
 Thông báo lỗi thật (cả `oplrun` lẫn `docplex.cp` đều báo giống nhau):
 
@@ -445,8 +457,10 @@ $n=6$ là **giá trị lớn nhất chạy được** trên bản Community. Ba 
 1. **Trần 2^1000 là trần LICENSE, không phải trần thuật toán.** Với license
    academic thì $n=10$ chạy bình thường; đây là giới hạn thương mại của IBM.
 2. **CP-SAT không có trần nào tương ứng** — và bản port có **nhiều hơn 132% số biến**
-   mà vẫn giải được cỡ bài gấp ba. Nghịch lý biểu kiến này chính là điểm đáng nói:
-   mã hoá "cồng kềnh" hơn không phải là bất lợi khi engine sinh ra để nuốt biến bool.
+   mà vẫn *dựng và giải được* cỡ bài gấp ba. Nghịch lý biểu kiến này chính là điểm
+   đáng nói: mã hoá "cồng kềnh" hơn không phải là bất lợi khi engine sinh ra để nuốt
+   biến bool. Nhưng phải nói đủ: ở $n\ge 8$, việc **đóng** được bài trong 300 s là
+   công của 8 worker chạy song song, không phải của một luồng đơn (xem cảnh báo trên).
 3. Đây là dẫn chứng cụ thể cho luận điểm **hạ tầng/giấy phép cũng là một chiều so
    sánh**, ngang hàng với ngôn ngữ và engine: `ortools` là thư viện Apache-2.0 cài
    bằng `pip install`, còn CP Optimizer đòi cài Studio và bị chặn theo cỡ bài.
@@ -460,12 +474,18 @@ $W=10$, 60 s):
 |---|---|---|---|---|
 | Feasible (**không chứng minh được tối ưu**) | 208 | 60.0 s (chạm giới hạn) | **79 268 907** | 38 573 731 |
 
+> ⚠️ Đây là lần chạy **chạm giới hạn thời gian**, nên `Nhánh` và `Fails` ở hàng này
+> đo *máy chạy nhanh cỡ nào trong 60 giây*, chứ không đo độ khó của bài — chúng đổi
+> theo tốc độ và tải máy, và **không tái lập được** như mọi số khác trong báo cáo.
+> Các lần chạy về sau trên cùng máy cho 86–88 triệu nhánh. Điều duy nhất tái lập
+> được ở hàng này là **kết luận**: hết 60 s vẫn không đóng nổi bài.
+
 Chỉ 60 biến, mà CP Optimizer duyệt **79 triệu nhánh** trong 60 s vẫn không đóng được
 bài. Lý do: mô hình (B) **không có ràng buộc phá đối xứng nào**, trong khi biến thể A
 có tới hai họ ((C13)(C14)). Đặt cạnh nhau, đây là minh hoạ rất gọn cho vai trò của
 phá đối xứng trong CP: bài 216 biến **có** phá đối xứng đóng trong 1.5 s; bài 60 biến
 **không** phá đối xứng, 60 s vẫn treo. Nó cũng cho thấy **tốc độ duyệt nhánh khủng
-khiếp của CP Optimizer** — 1.3 triệu nhánh/giây — và tốc độ đó một mình không cứu
+khiếp của CP Optimizer** — 1.3–1.45 triệu nhánh/giây tuỳ tải máy — và tốc độ đó một mình không cứu
 được một mô hình dựng kém.
 
 ---
@@ -485,8 +505,9 @@ Bản port CP-SAT sinh thêm 285 biến và diễn đạt vòng 5 ràng buộc, 
 không hề tầm thường: port **thiếu** ràng buộc sẽ cho $B^\star<12$, port **thừa** sẽ
 cho $B^\star>12$ hoặc vô nghiệm. Trùng khít đúng 12 ở cả ba ⇒ ba mô hình tương đương.
 
-Kiểm thêm ở $n=8$ với hai seed khác nhau (0 và 42): cùng cho tối ưu **16** —
-loại trừ khả năng số liệu phụ thuộc may rủi của bộ sinh ngẫu nhiên.
+Kiểm thêm ở $n=8$ (`--workers 8`, vì một luồng không đóng được cỡ này trong 300 s)
+với hai seed khác nhau (0 và 42): cùng cho tối ưu **16** — loại trừ khả năng số liệu
+phụ thuộc may rủi của bộ sinh ngẫu nhiên.
 
 Chiều `docplexcp` giải **biến thể B** nên **không** vào bảng này; nó được kiểm bằng
 tính hợp lệ của lời giải theo tập ràng buộc của chính nó (mỗi đội đúng một trận mỗi
@@ -508,9 +529,10 @@ python3 models/3.1_sports/ortools/sports_sat.py data/sports/sports.dat
 # file phụ trợ cho hai trục so sánh
 python3 models/3.1_sports/docplexcp/sports_portA_cp.py
 
-# tái lập số liệu CP-SAT (tất định)
+# tái lập số liệu CP-SAT — 1 worker + seed 0 đã là MẶC ĐỊNH, hai cờ dưới chỉ để nói rõ
 python3 models/3.1_sports/ortools/sports_sat.py --workers 1 --seed 0 --quiet
 
-# vượt trần Community: CP-SAT giải được đúng cỡ bản gốc IBM
-python3 models/3.1_sports/ortools/sports_sat.py --n 10 --time-limit 300 --quiet
+# vượt trần Community: CP-SAT dựng và giải được đúng cỡ bản gốc IBM.
+# Cần đa luồng tường minh — một luồng thì 300 s vẫn chưa chứng minh được tối ưu.
+python3 models/3.1_sports/ortools/sports_sat.py --n 10 --time-limit 300 --workers 8 --quiet
 ```

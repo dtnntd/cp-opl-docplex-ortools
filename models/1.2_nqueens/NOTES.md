@@ -163,7 +163,17 @@ engine.
 
 Thêm nữa, CP-SAT chạy đa luồng nên số liệu **đổi giữa các lần chạy** — cùng model
 $N = 8$ đã ghi nhận `branches` lúc 475, lúc 0 (presolve giải xong trước khi vào tìm
-kiếm). Muốn số liệu tái lập phải đặt `num_search_workers = 1` và `random_seed`.
+kiếm). Vì thế bản trong repo cố định `num_search_workers = 1` và `random_seed = 0`;
+sau khi cố định, ba lần chạy liên tiếp cho đúng một bộ số:
+
+| Chiều | Nhánh | Fails / Conflicts |
+|---|---|---|
+| DOcplex.cp (CP Optimizer) | **255** | **99** (fails) |
+| OR-Tools (CP-SAT) | **475** | **9** (conflicts) |
+
+Con số 475 nhánh so với 9 conflict cho thấy rõ hai engine đếm hai thứ khác nhau:
+CP-SAT duyệt nhiều nhánh nhưng chỉ học được 9 mệnh đề xung đột, trong khi CP
+Optimizer báo 99 nhánh chết trên 255 nhánh.
 
 ### Giới hạn Community Edition
 

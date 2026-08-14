@@ -399,8 +399,8 @@ clique, nó phải vét. CP-SAT thì sinh mệnh đề và rút gọn ở presol
 ngay.
 
 **Nhưng đừng vội kết luận "CP-SAT mạnh hơn".** Cùng phép so này ở bài 3.2, thứ tự
-đảo ngược: trên bộ `large`, CP Optimizer về đích ở **0.58 s** còn CP-SAT mất
-**2.46 s**. Kết luận đúng là *hai chiến lược khác nhau*:
+đảo ngược: trên bộ `large`, CP Optimizer về đích ở **0.67 s** còn CP-SAT mất
+**2.52 s**. Kết luận đúng là *hai chiến lược khác nhau*:
 
 - **CP-SAT** — ít nhánh, mỗi nhánh đắt; mạnh ở bài tổ hợp thuần và ở việc chứng
   minh tối ưu, nhờ học mệnh đề xung đột và presolve rất khoẻ.

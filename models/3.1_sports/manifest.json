@@ -37,7 +37,7 @@
       "source": "new",
       "variant": "A",
       "encoding": "add_allowed_assignments + add_all_different + add_inverse + 1-hot bằng add_map_domain (CP-SAT không có count)",
-      "note": "Port ĐẦY ĐỦ sports.mod, không lược bỏ ràng buộc nào. Kiểm chứng chéo với chiều OPL: cùng objective tối ưu = 12 ở n = 6. Sinh 285 biến bool phụ (501 biến so với 216 của CP Optimizer).",
+      "note": "Port ĐẦY ĐỦ sports.mod, không lược bỏ ràng buộc nào. Kiểm chứng chéo với chiều OPL: cùng objective tối ưu = 12 ở n = 6. Sinh 285 biến bool phụ (501 biến so với 216 của CP Optimizer). Mặc định --workers 1 --seed 0 để tái lập (PLAN.md §2.4): 80 264 nhánh / 9 150 conflicts, 3.06 s — giống hệt ở cả 3 lần chạy.",
       "timeout": 300
     }
   },
@@ -54,6 +54,6 @@
     "max_n_solvable": 6,
     "measured_log2_search_space_n6": 510.6,
     "estimated_log2_search_space_n8": 1092,
-    "note": "n = 8 và n = 10 bị CP Optimizer Community từ chối bằng FATAL[ENGINE_001] (trần 2^1000). CP-SAT không có trần này: n = 8 tối ưu trong 14.8 s, n = 10 (đúng cỡ bản gốc IBM) tối ưu trong 17.9 s."
+    "note": "n = 8 và n = 10 bị CP Optimizer Community từ chối bằng FATAL[ENGINE_001] (trần 2^1000). CP-SAT không có trần này: n = 8 tối ưu trong 14.8 s, n = 10 (đúng cỡ bản gốc IBM) tối ưu trong 17.9 s — CẢ HAI đo với --workers 8. Ở cấu hình tái lập mặc định (1 worker, seed 0) thì 300 s chưa đóng được: n = 8 dừng ở FEASIBLE obj 16, n = 10 dừng ở FEASIBLE obj 28. Hai cỡ bài này là bằng chứng về trần license, không phải điểm đo hiệu năng tái lập."
   }
 }

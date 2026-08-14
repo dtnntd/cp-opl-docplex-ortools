@@ -406,7 +406,7 @@ vì thế đo đúng một thứ.
 
 Ở ft06, cách của CP-SAT thắng rõ. Nhưng **không được suy rộng từ một instance**:
 bảng benchmark bài 3.2 cho thấy thứ tự đảo ngược ở hai cấu hình lớn, nơi CP
-Optimizer về trước 1,4–4× (xem [`models/3.2_timetable/NOTES.md`](../3.2_timetable/NOTES.md)).
+Optimizer về trước 1,6–3,8× (xem [`models/3.2_timetable/NOTES.md`](../3.2_timetable/NOTES.md)).
 Kết luận đúng phải là: **hai engine mạnh ở hai chế độ khác nhau**, và ft06 quá
 nhỏ để phân định.
 

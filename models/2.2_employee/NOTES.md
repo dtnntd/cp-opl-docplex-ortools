@@ -507,7 +507,7 @@ nhưng yếu hơn hẳn: nó không sinh ra được **lời giải thích cho x
 **Đối chiếu ngược với bài 3.2 mới thấy hết ý nghĩa.** Ở đó, chính CP Optimizer là bên
 có primitive mà CP-SAT thiếu — `alternative` để chọn tài nguyên, `forbid_extent` để khai
 báo lịch bận không tốn một biến quyết định nào; CP-SAT phải bung tay thành literal hiện
-diện và phép tuyển, và trên bộ `large` nó thua 0,58 s so với 2,46 s. Ở bài 2.2 thì
+diện và phép tuyển, và trên bộ `large` nó thua 0,67 s so với 2,52 s. Ở bài 2.2 thì
 ngược hẳn chiều.
 
 | | Bài 3.2 (interval, min makespan) | Bài 2.2 (boolean, max nguyện vọng) |
@@ -515,7 +515,7 @@ ngược hẳn chiều.
 | Primitive quyết định | `alternative`, `forbid_extent`, `no_overlap` | `add_exactly_one`, `add_at_most_one` |
 | Bên có sẵn primitive | **CP Optimizer** | **CP-SAT** |
 | Bên phải dựng tay | CP-SAT (literal hiện diện, phép tuyển) | CP Optimizer (tổng số học) |
-| Bên thắng, bộ lớn nhất | CP Optimizer (0,58 s vs 2,46 s) | **CP-SAT (0,0055 s vs 0,013 s; 0 xung đột)** |
+| Bên thắng, bộ lớn nhất | CP Optimizer (0,67 s vs 2,52 s) | **CP-SAT (0,0055 s vs 0,013 s; 0 xung đột)** |
 
 > **Kết luận trục engine.** Số liệu **xác nhận** nhận định của brief §1: bài tổ hợp /
 > boolean nặng là sở trường của CP-SAT, và ở đây nó thắng ở cả ba cột — nhanh hơn 2,4×,

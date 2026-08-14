@@ -40,14 +40,33 @@
       ],
       "source": "new",
       "encoding": "interval + optional interval + add_no_overlap",
-      "note": "Port đầy đủ mô hình gốc sang CP-SAT. Đã kiểm chứng chéo với chiều OPL: makespan trùng khớp ở cả 3 cấu hình (small=20, large=44, large+avail=47)",
+      "note": "Port đầy đủ mô hình gốc sang CP-SAT. Đã kiểm chứng chéo với hai chiều CP Optimizer: makespan trùng khớp ở cả 4 cấu hình (small=20, small+avail=21, large=44, large+avail=47). Mặc định --workers 1 --seed 0 để tái lập (PLAN.md §2.4); 5 lần chạy liên tiếp cho đúng cùng số liệu: small 553 nhánh/4 conflicts, small+avail 549/4, large 15 439/236, large+avail 13 305/183.",
       "timeout": 900
     }
   },
   "benchmark": {
-    "note": "Bài duy nhất có đo hiệu năng định lượng. Seed và số worker cố định để tái lập.",
+    "note": "Bài duy nhất có đo hiệu năng định lượng. Seed và số worker cố định để tái lập (chiều ortools: num_search_workers = 1, random_seed = 0 — mặc định trong timetable_sat.py). results/bench.csv là bản đo hiện hành: 4 cấu hình × 3 chiều × 5 lần = 60 lượt, chạy bằng make bench ở cấu hình 1 worker. Cả 12 ô đều tất định (5/5 lần trùng khít branches và fails/conflicts) và ba chiều cùng objective ở cả 4 cấu hình: small 20, small+avail 21, large 44, large+avail 47.",
+    "script": "tools/bench_timetable.py",
+    "csv": "results/bench.csv",
+    "reps": 5,
+    "data_files": {
+      "data/timetable/base.dat": "tham số chung (IBM) — dùng cho mọi cấu hình",
+      "data/timetable/small.dat": "bộ nhỏ, 4 ngày × 6 tiết, 22 buổi học (IBM)",
+      "data/timetable/large.dat": "bộ lớn, 8 ngày × 6 tiết, 106 buổi học (IBM)",
+      "data/timetable/availability.dat": "availability cho bộ LARGE (27 mốc) — viết mới cho bài 3.2",
+      "data/timetable/availability_small.dat": "availability cho bộ SMALL (6 mốc) — viết mới cho bài 3.2. BẮT BUỘC phải là file riêng: mọi mốc của availability.dat nằm ngoài tầm Time 0..23 hoặc gọi tên môn/giáo viên bộ small không có, nên dùng nó cho bộ small thì ràng buộc không cắt được gì và ô small+avail trùng khít ô small. Mật độ giữ đúng tỉ lệ của bản large: 0.255 mốc/buổi học, chia RB7:RB8:RB4 = 3:1:2.",
+      "data/timetable/availability_none.dat": "ba tập rỗng — chiều OPL cần giá trị cho mọi phần tử khai bằng `...`"
+    },
     "configs": [
       { "name": "small", "args": ["data/timetable/base.dat", "data/timetable/small.dat"] },
+      {
+        "name": "small+avail",
+        "args": [
+          "data/timetable/base.dat",
+          "data/timetable/small.dat",
+          "data/timetable/availability_small.dat"
+        ]
+      },
       { "name": "large", "args": ["data/timetable/base.dat", "data/timetable/large.dat"] },
       {
         "name": "large+avail",

@@ -175,7 +175,7 @@ $[\sigma_i,\eta_i)$ không quá 1.
 
 $$\sum_{j\,:\,c_j=c_i}\mathbb{1}\bigl[\sigma_i\le\sigma_j<\eta_i\bigr]\ <\ 2 \qquad\forall i$$
 
-Sinh $O(|\mathcal{I}|^2)$ tích có điều kiện — nguồn gốc của con số 17 s ở bảng benchmark.
+Sinh $O(|\mathcal{I}|^2)$ tích có điều kiện — nguồn gốc của con số 17.9 s ở bảng benchmark.
 
 **② DOcplex.cp — biến interval, `alternative` + `no_overlap`.** Mỗi buổi là một biến
 interval $x_i$; mỗi tài nguyên dùng được sinh một interval tuỳ chọn; `alternative`
@@ -222,14 +222,15 @@ Community Edition.
 
 ## Kiểm chứng chéo
 
-Hai chiều dựng độc lập, khác cách mã hoá, khác engine — mà **cùng ra một nghiệm
-tối ưu** ở cả ba cấu hình dữ liệu:
+Ba chiều dựng độc lập, khác cách mã hoá, khác engine — mà **cùng ra một nghiệm
+tối ưu** ở cả bốn cấu hình dữ liệu (60 lượt chạy của `make bench`, không lượt nào lệch):
 
-| Cấu hình | OPL | OR-Tools |
-|---|---|---|
-| `base + small` | 20 | 20 |
-| `base + large` | 44 | 44 |
-| `base + large + availability` | 47 | 47 |
+| Cấu hình | OPL | DOcplex.cp | OR-Tools |
+|---|---|---|---|
+| `base + small` | 20 | 20 | 20 |
+| `base + small + availability_small` | 21 | 21 | 21 |
+| `base + large` | 44 | 44 | 44 |
+| `base + large + availability` | 47 | 47 | 47 |
 
 Đây là bằng chứng bản port trung thực. Không có kiểm chứng này thì mọi so sánh
 hiệu năng phía dưới đều vô nghĩa — nhanh hơn mà giải sai bài thì không nói lên gì.
@@ -240,10 +241,15 @@ hiệu năng phía dưới đều vô nghĩa — nhanh hơn mà giải sai bài 
 
 | Bộ `large` | log₂ không gian | Makespan | OPL | DOcplex.cp | OR-Tools |
 |---|---|---|---|---|---|
-| không availability | 786.4 | 44 | 17.2 s | 0.58 s | 2.46 s |
-| có availability | **780.3** | 47 | 7.7 s | 1.41 s | 2.04 s |
+| không availability | 786.4 | 44 | 17.94 s | 0.67 s | 2.52 s |
+| có availability | **780.3** | 47 | 8.60 s | 1.50 s | 2.42 s |
 
-Hai điều đáng nói:
+| Bộ `small` | Makespan | OPL | DOcplex.cp | OR-Tools |
+|---|---|---|---|---|
+| không availability | 20 | 0.39 s | 0.44 s | 0.051 s |
+| có availability | 21 | 0.47 s | 0.36 s | 0.061 s |
+
+Ba điều đáng nói:
 
 1. **Thêm ràng buộc làm không gian tìm kiếm GIẢM** (786.4 → 780.3), dù số ràng
    buộc gần gấp đôi (2 120 → 3 947). Ràng buộc khả dụng chỉ cắt miền của biến sẵn
@@ -251,24 +257,99 @@ Hai điều đáng nói:
    kiếm* chứ không theo *số ràng buộc* — nên còn nhiều chỗ để thêm ràng buộc nữa.
 2. **Cái giá của tính khả dụng nằm ở chất lượng lời giải, không ở thời gian giải.**
    Makespan xấu đi 44 → 47, còn thời gian giải thì tuỳ chiều: OPL *nhanh hơn* hẳn
-   (17.2 → 7.7 s) vì miền bị cắt bớt, DOcplex.cp chậm lại, OR-Tools gần như không đổi.
+   (17.94 → 8.60 s) vì miền bị cắt bớt, DOcplex.cp chậm lại, OR-Tools gần như không đổi
+   (2.52 → 2.42 s).
    Ràng buộc thực tế hơn làm lịch dài ra, chứ không làm bài toán khó hơn về tính toán.
+3. **Hiện tượng đó lặp lại y hệt ở bộ nhỏ**, chỉ khác biên độ: makespan 20 → 21,
+   OPL chậm lại một chút còn DOcplex.cp nhanh lên (0.44 → 0.36 s). Hai kích thước
+   cùng nói một điều thì kết luận mới đứng được — mà muốn vậy thì bộ small phải có
+   file availability của riêng nó, xem mục ngay dưới.
 
-### Hiệu năng — bảng trung vị 3 lần chạy
+### Ràng buộc khả dụng chỉ có nghĩa khi nó nằm trong tầm dữ liệu
+
+Ô `small+avail` của lưới 2×2 đã từng **rỗng nghĩa**: nó cho số trùng khít từng
+chữ số với ô `small` ở cả ba chiều (makespan 20; 30 412 / 75 025 / 553 nhánh).
+Không phải lỗi script, cũng không phải lỗi mô hình — mà vì cả bốn ô cùng dùng
+`availability.dat`, một file viết cho bộ `large`:
+
+| Tập | Nội dung bản `large` | Vào bộ `small` thì |
+|---|---|---|
+| `ClassBusySet` | `<"Z",42..44>`, `<"X",29>` | small chỉ có 4 ngày × 6 tiết = Time 0..23 ⇒ mọi mốc **ngoài tầm** |
+| `DisciplineAvoidSet` | toàn môn `Sport` | small chỉ học French / Maths / Physics ⇒ **không khớp môn nào** |
+| `TeacherBusySet` | Patrick (Sport), Odile (Economy), Marie-Laure (Geography, History), Paul (Physics) | ba người đầu dạy môn small không học; mốc của Paul là t = 33..35, cũng **ngoài tầm** |
+
+Ràng buộc vẫn được sinh ra đủ cả — engine vẫn phải lan truyền chúng — nhưng
+`Start > t ∨ End ≤ t` với `t = 42` là hằng đúng khi `End ≤ 23`. Không mốc nào cắt
+được một nghiệm nào, nên số liệu không nhúc nhích một đơn vị.
+
+Đây là quan sát đáng giữ: **một ràng buộc khả dụng chỉ đo được khi mốc thời gian và
+tên tài nguyên của nó nằm trong tầm của chính bộ dữ liệu đang chạy.** Ràng buộc "có
+mà không cắt" không báo lỗi ở bất cứ tầng nào — không phải lỗi cú pháp, không phải
+lỗi kiểu, không làm bài vô nghiệm; nó chỉ lặng lẽ biến một ô thí nghiệm thành bản
+sao của ô đối chứng. Dấu hiệu duy nhất là hai hàng số giống nhau đến từng chữ số —
+thứ mà chỉ có yêu cầu *tất định* (1 worker, seed cố định) mới làm lộ ra được; với
+số liệu dao động giữa các lần chạy thì hai hàng đó trông như "khác một chút", và
+lỗi này đã lọt.
+
+`data/timetable/availability_small.dat` là bản đúng tầm bộ small. Nguyên tắc dựng nó:
+
+- **Giữ nguyên mật độ của bản large**, để hai ô "+avail" là cùng một loại can thiệp:
+  large có 27 mốc trên 106 buổi học (0.255 mốc/buổi), chia `TeacherBusySet` :
+  `ClassBusySet` : `DisciplineAvoidSet` = 15 : 4 : 8. Bộ small có 22 buổi học ⇒
+  22 × 0.255 ≈ 5.6, làm tròn **6 mốc**, chia theo đúng tỉ lệ trên thành **3 : 1 : 2**.
+- **Đủ cả ba nhóm RB7 / RB8 / RB4**, mỗi nhóm giữ đúng mô-típ của bản large: một
+  giáo viên nghỉ trọn một buổi (Pierre, sáng ngày 2 — `t = 12..14`; anh dạy toàn bộ
+  French, 14 trên 30 tiết của cả kỳ nên khoá anh lại là cắt vào chỗ chật nhất), một
+  lớp bận tiết cuối ngày (`<"X",11>`, đúng mô-típ `<"X",29>` của bản large), một môn
+  bị tránh ở tiết cuối ngày (`<"Maths",5>`, `<"Maths",17>`). Ngày đánh số từ 0, y
+  như `availability.dat`.
+- **Mọi mốc phải cắt thật.** Kiểm bằng cách chạy bộ small *không* availability
+  nhưng ép một buổi học phủ đúng ô bị cấm: cả sáu ô đều vẫn cho lịch tối ưu
+  makespan 20. Nghĩa là mỗi mốc loại bỏ nghiệm có thật, không phải ràng buộc thừa.
+
+Chỗ cuối cùng đó không thừa lời: bản `large` có sẵn một ví dụ ràng buộc **thừa**.
+`DisciplineAvoidSet` của nó cấm `Sport` ở tiết cuối buổi chiều, trong khi
+`MorningDiscipline = {"Sport"}` đã ép mọi buổi Sport (dài 1 tiết) bắt đầu ở ba tiết
+đầu ngày — nên tám mốc đó không loại thêm nghiệm nào. Bỏ hẳn `DisciplineAvoidSet`
+khỏi bản large cho **đúng cùng một kết quả**: makespan 47, 13 305 nhánh, 183
+conflicts. Vì thế RB4 của bộ small chọn `Maths`, môn không nằm trong
+`MorningDiscipline`.
+
+### Hiệu năng — bảng trung vị 5 lần chạy
 
 Sinh bằng `make bench` → `results/bench.csv`. Seed và số worker cố định để tái lập.
+Lưới đầy đủ **4 cấu hình × 3 chiều = 12 ô**, mỗi ô 5 lần chạy:
+
+> **Quy ước đọc số.** Cột *Nhánh* và *Fails/Confl* là tất định, trích được chính xác
+> tới từng đơn vị. Cột *Thời gian* là **trung vị 5 lần chạy trên một máy cụ thể** và
+> dao động cỡ 10 % theo tải, nên đo lại sẽ ra số khác ở chữ số cuối. Mọi kết luận
+> dưới đây vì thế nói bằng **bậc độ lớn và tỉ lệ**, không bằng chữ số cuối.
 
 | Cấu hình | Chiều | Engine | Mã hoá | Obj | Thời gian | Nhánh | Fails/Confl |
 |---|---|---|---|---|---|---|---|
-| small | OPL | CP Optimizer | đếm có điều kiện | 20 | 0.32 s | 30 412 | 12 917 |
-| small | DOcplex.cp | CP Optimizer | interval | 20 | 0.45 s | 75 025 | 33 825 |
-| small | OR-Tools | CP-SAT | interval | 20 | **0.07 s** | 575 | 6 |
-| large | OPL | CP Optimizer | đếm có điều kiện | 44 | 17.17 s | 216 066 | 96 460 |
-| large | DOcplex.cp | CP Optimizer | interval | 44 | **0.58 s** | 34 194 | 7 037 |
-| large | OR-Tools | CP-SAT | interval | 44 | 2.46 s | 7 095 | 185 |
-| large+avail | OPL | CP Optimizer | đếm có điều kiện | 47 | 7.74 s | 125 151 | 55 086 |
-| large+avail | DOcplex.cp | CP Optimizer | interval | 47 | **1.41 s** | 154 818 | 59 201 |
-| large+avail | OR-Tools | CP-SAT | interval | 47 | 2.04 s | 5 399 | 141 |
+| small | OPL | CP Optimizer | đếm có điều kiện | 20 | 0.39 s | 30 412 | 12 917 |
+| small | DOcplex.cp | CP Optimizer | interval | 20 | 0.44 s | 75 025 | 33 825 |
+| small | OR-Tools | CP-SAT | interval | 20 | **0.051 s** | 553 | 4 |
+| small+avail | OPL | CP Optimizer | đếm có điều kiện | 21 | 0.47 s | 45 176 | 20 250 |
+| small+avail | DOcplex.cp | CP Optimizer | interval | 21 | 0.36 s | 61 824 | 26 221 |
+| small+avail | OR-Tools | CP-SAT | interval | 21 | **0.061 s** | 549 | 4 |
+| large | OPL | CP Optimizer | đếm có điều kiện | 44 | 17.94 s | 216 066 | 96 460 |
+| large | DOcplex.cp | CP Optimizer | interval | 44 | **0.67 s** | 34 194 | 7 037 |
+| large | OR-Tools | CP-SAT | interval | 44 | 2.52 s | 15 439 | 236 |
+| large+avail | OPL | CP Optimizer | đếm có điều kiện | 47 | 8.60 s | 125 151 | 55 086 |
+| large+avail | DOcplex.cp | CP Optimizer | interval | 47 | **1.50 s** | 154 818 | 59 201 |
+| large+avail | OR-Tools | CP-SAT | interval | 47 | 2.42 s | 13 305 | 183 |
+
+> **Cả 12 ô đều tất định.** Trong mỗi ô, 5/5 lần chạy cho **đúng cùng một** số
+> nhánh và số fails/conflicts (chỉ thời gian đồng hồ dao động; cột "Thời gian" là
+> trung vị 5 lần). Ba chiều cũng cùng một objective ở cả 4 cấu hình — xem mục
+> *Kiểm chứng chéo*. Điều này chỉ có được sau khi chiều OR-Tools cố định
+> `num_workers = 1` + `random_seed = 0`: trước đó file mặc định 8 worker và bản
+> chụp `results/bench.csv` cũ ghi 585/575/376 nhánh ở `small` cho ba lần chạy cùng
+> một cấu hình. Số nhánh của bản 1 worker **cao hơn** bản 8 worker (đa luồng chạy
+> nhiều chiến lược song song nên đích đến gần hơn) — đổi tốc độ lấy tính tái lập,
+> và đó là đánh đổi bắt buộc: chính tính tất định mới làm lộ ra rằng ô
+> `small+avail` từng là bản sao từng chữ số của ô `small`.
 
 ### Đọc bảng: hai phép so, mỗi phép đổi đúng một biến số
 
@@ -276,17 +357,24 @@ Sinh bằng `make bench` → `results/bench.csv`. Seed và số worker cố đ�
 
 | Cấu hình | đếm có điều kiện | interval | tỉ lệ |
 |---|---|---|---|
-| small | 0.32 s | 0.45 s | 0.7× (interval *chậm hơn*) |
-| large | 17.17 s | 0.58 s | **29× nhanh hơn** |
-| large+avail | 7.74 s | 1.41 s | **5.5× nhanh hơn** |
+| small | 0.39 s | 0.44 s | 0.9× (interval *chậm hơn*) |
+| small+avail | 0.47 s | 0.36 s | 1.3× nhanh hơn |
+| large | 17.94 s | 0.67 s | **27× nhanh hơn** |
+| large+avail | 8.60 s | 1.50 s | **5.7× nhanh hơn** |
 
 Ở bài nhỏ, mã hoá interval còn thua vì chi phí dựng mô hình lớn hơn phần lợi. Bài
 càng lớn thì càng thắng đậm — vì cách đếm có điều kiện sinh ra số ràng buộc tăng
 theo **bình phương** số khoá học, trong khi `no_overlap` chỉ là một ràng buộc toàn
 cục cho mỗi tài nguyên.
 
+Ô `small+avail` thêm một chi tiết: thêm ràng buộc khả dụng vào bộ nhỏ làm hai mã
+hoá đi **ngược chiều nhau**. Đếm có điều kiện duyệt nhiều hơn hẳn (30 412 → 45 176
+nhánh, 0.39 → 0.47 s) trong khi interval duyệt ít đi (75 025 → 61 824 nhánh,
+0.44 → 0.36 s) — cùng một ràng buộc, một bên coi là gánh nặng, một bên coi là
+thông tin cắt miền. Đủ để lật dấu của tỉ lệ: 0.9× thành 1.3×.
+
 Đáng chú ý: ở `large+avail`, DOcplex.cp duyệt **nhiều nhánh hơn** OPL (154 818 so
-với 125 151) mà vẫn nhanh hơn 5.5×. **Số nhánh và thời gian không đi cùng nhau** —
+với 125 151) mà vẫn nhanh hơn 5.7×. **Số nhánh và thời gian không đi cùng nhau** —
 mỗi nhánh của mã hoá đếm-có-điều-kiện đắt hơn hẳn vì phải lan truyền qua hàng nghìn
 tích có điều kiện.
 
@@ -294,15 +382,23 @@ tích có điều kiện.
 
 | Cấu hình | CP Optimizer | CP-SAT | nhánh CPO | nhánh CP-SAT |
 |---|---|---|---|---|
-| small | 0.45 s | **0.07 s** | 75 025 | 575 |
-| large | **0.58 s** | 2.46 s | 34 194 | 7 095 |
-| large+avail | **1.41 s** | 2.04 s | 154 818 | 5 399 |
+| small | 0.44 s | **0.051 s** | 75 025 | 553 |
+| small+avail | 0.36 s | **0.061 s** | 61 824 | 549 |
+| large | **0.67 s** | 2.52 s | 34 194 | 15 439 |
+| large+avail | **1.50 s** | 2.42 s | 154 818 | 13 305 |
 
-Hai engine đi hai lối rõ rệt. CP-SAT duyệt **ít hơn 30–130 lần** số nhánh nhờ học
-mệnh đề xung đột, nhưng mỗi nhánh đắt hơn nhiều. CP Optimizer duyệt ồ ạt với chi
-phí mỗi nhánh rất rẻ. Ở bài nhỏ, cách của CP-SAT thắng tuyệt đối; ở hai bài lớn,
-CP Optimizer về trước — đúng với nhận định ở brief §1 rằng CP Optimizer mạnh nhất
-ở bài lập lịch, nơi nó có 20 năm tối ưu riêng cho biến interval.
+Hai engine đi hai lối rõ rệt. CP-SAT duyệt **ít hơn 2–136 lần** số nhánh nhờ học
+mệnh đề xung đột, nhưng mỗi nhánh đắt hơn nhiều: ở `large` nó duyệt 15 439 nhánh
+trong 2.52 s (**6 100 nhánh/giây**) trong khi CP Optimizer duyệt 34 194 nhánh trong
+0.67 s (**51 000 nhánh/giây**) — chênh hơn 8× về chi phí mỗi nhánh. Ở hai cấu hình
+nhỏ, cách của CP-SAT thắng tuyệt đối (6–9× nhanh hơn); ở hai cấu hình lớn, CP
+Optimizer về trước — đúng với nhận
+định ở brief §1 rằng CP Optimizer mạnh nhất ở bài lập lịch, nơi nó có 20 năm tối ưu
+riêng cho biến interval.
+
+Lưu ý cách đọc: khoảng cách "ít hơn 2–136 lần" **rộng hơn** con số ghi trước đây,
+vì bản OR-Tools cũ chạy 8 worker — đa luồng cắt bớt số nhánh của luồng thắng cuộc
+nhưng làm số đo không tái lập được. Số trong bảng nay là của một luồng đơn, tất định.
 
 > Ghi nhớ khi đọc số: `fails` của CP Optimizer và `conflicts` của CP-SAT đếm hai
 > thứ khác nhau, chỉ so được trong cùng một engine.
@@ -353,7 +449,21 @@ nói tới, ở dạng cụ thể sờ được.
 ```bash
 make run P=models/3.2_timetable
 
+# lưới benchmark 4 cấu hình × 3 chiều × 5 lần
+make bench
+
 # đo chi phí của availability: bỏ file availability.dat đi
 python3 models/3.2_timetable/ortools/timetable_sat.py \
     data/timetable/base.dat data/timetable/large.dat
+
+# bộ small dùng file availability RIÊNG — availability.dat viết cho bộ large,
+# mọi mốc của nó nằm ngoài tầm Time 0..23 của bộ small nên không cắt được gì:
+python3 models/3.2_timetable/ortools/timetable_sat.py \
+    data/timetable/base.dat data/timetable/small.dat \
+    data/timetable/availability_small.dat
+
+# chiều OR-Tools mặc định --workers 1 --seed 0 (tái lập, PLAN.md §2.4).
+# Chỉ nới ra khi muốn ĐO lợi ích đa luồng — số liệu khi đó không tái lập được:
+python3 models/3.2_timetable/ortools/timetable_sat.py \
+    data/timetable/base.dat data/timetable/large.dat --workers 8
 ```
