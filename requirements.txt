@@ -1,5 +1,10 @@
 # Lớp mô hình hoá + engine
-ortools>=9.14          # engine CP-SAT (đi kèm luôn trong package)
+ortools==9.14.6206     # engine CP-SAT (đi kèm luôn trong package)
+                       # GHIM CỨNG, không nới lên 9.15: ortools 9.15.6755 trả
+                       # INFEASIBLE cho bài 3.1 (sports) trong khi 9.14.6206 trả
+                       # OPTIMAL obj=12 — đã tái lập, hai bản dump CpModelProto
+                       # giống hệt nhau nên khác biệt nằm ở solver chứ không ở
+                       # model. Nới ràng buộc này là làm hỏng bài 3.1.
 docplex>=2.32          # CHỈ dùng nhánh docplex.cp; engine CP Optimizer lấy từ CPLEX Studio
                        # (docplex KHÔNG chứa solver — xem tools/cpo_env.py)
 
