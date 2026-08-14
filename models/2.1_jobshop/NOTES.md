@@ -454,9 +454,14 @@ mọi con số trong bảng trên đều tái lập được từng đơn vị.
 
 ### Biểu đồ Gantt
 
-![Gantt DOcplex.cp](../../results/jobshop_ft06_docplexcp.png)
+Báo cáo dựng Gantt của chiều OR-Tools ngay tại chỗ, từ nghiệm vừa chạy — xem ô
+`show_solution("2.1_jobshop")` trong notebook phần 2. Muốn có thêm bản Gantt của
+chiều DOcplex.cp để đặt hai lịch cạnh nhau thì chạy hai model với cờ `--gantt`:
 
-![Gantt OR-Tools](../../results/jobshop_ft06_ortools.png)
+```bash
+python3 models/2.1_jobshop/docplexcp/jobshop_cp.py data/jobshop/ft06.dat --gantt results/jobshop_ft06_docplexcp.png
+python3 models/2.1_jobshop/ortools/jobshop_sat.py  data/jobshop/ft06.dat --gantt results/jobshop_ft06_ortools.png
+```
 
 Hai lịch khác nhau, cùng makespan 55. Nhìn vào biểu đồ thấy ngay vì sao chặn dưới
 47 không đạt được: máy $M_5$ (tải 43) và job $J_1$ (tải 47) đều bị chèn khe hở —
