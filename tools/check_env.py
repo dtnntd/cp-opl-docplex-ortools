@@ -41,7 +41,7 @@ def check_docplexcp() -> tuple[bool, str]:
     try:
         import cpo_env
     except RuntimeError as e:
-        return False, str(e)
+        return False, str(e).replace("\n", "\n         ")
     from docplex.cp.model import CpoModel
 
     m = CpoModel()
@@ -60,6 +60,19 @@ def check_opl() -> tuple[bool, str]:
     script = ROOT / "tools" / "oplrun.sh"
     if not script.exists():
         return False, "thiếu tools/oplrun.sh"
+
+    # oplrun.sh --which chỉ dò tìm rồi in đường dẫn, không giải gì cả. In ra để
+    # người dùng trên hệ điều hành khác biết script đang gọi đúng file nào.
+    try:
+        w = subprocess.run(
+            [str(script), "--which"], capture_output=True, text=True, timeout=60
+        )
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return False, f"không chạy được tools/oplrun.sh: {e}"
+    if w.returncode != 0:
+        return False, w.stderr.strip().replace("\n", "\n         ")
+    oplrun_path = w.stdout.strip()
+
     probe = ROOT / "results" / "_probe.mod"
     probe.parent.mkdir(exist_ok=True)
     probe.write_text(
@@ -80,7 +93,7 @@ def check_opl() -> tuple[bool, str]:
     if "PROBE_OK" not in p.stdout:
         tail = (p.stdout + p.stderr).strip().splitlines()[-4:]
         return False, "oplrun không giải được model thử:\n         " + "\n         ".join(tail)
-    return True, "oplrun.exe — engine CP Optimizer (qua WSL interop)"
+    return True, f"oplrun — engine CP Optimizer\n         {oplrun_path}"
 
 
 def main() -> int:

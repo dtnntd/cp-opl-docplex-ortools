@@ -34,14 +34,38 @@ make check     # xác nhận cả ba engine gọi được
 
 ### Yêu cầu ngoài pip
 
-- **IBM ILOG CPLEX Optimization Studio** — cung cấp `oplrun` (chiều OPL) và
-  `cpoptimizer` (engine cho chiều DOcplex.cp). `pip install docplex` **không** kèm
-  solver; docplex chỉ là lớp mô hình hoá bằng Python.
-- Máy này dùng bản **Community Edition 22.2 cài trên Windows**, gọi từ WSL qua
-  interop. `tools/oplrun.sh` lo việc dịch đường dẫn Linux → Windows;
-  `tools/cpo_env.py` lo việc trỏ docplex.cp sang `cpoptimizer.exe`.
-- Cài ở đường dẫn khác thì đặt biến môi trường `CPLEX_STUDIO_DIR` hoặc
-  `CPOPTIMIZER_EXEC`.
+**Chiều OR-Tools chạy được ở mọi nơi chỉ bằng `pip`** — `make setup` là đủ, không
+cần cài gì thêm. Hai chiều còn lại (OPL và DOcplex.cp) cần **IBM ILOG CPLEX
+Optimization Studio**: nó cung cấp `oplrun` cho chiều OPL và `cpoptimizer` — engine
+cho chiều DOcplex.cp. `pip install docplex` **không** kèm solver; docplex chỉ là
+lớp mô hình hoá bằng Python.
+
+`tools/oplrun.sh` và `tools/cpo_env.py` tự dò tìm hai file thực thi đó theo hệ
+điều hành, bắt được mọi số hiệu phiên bản (221, 222, 2211, ...) và cả bản đầy đủ
+lẫn Community. Thư mục cài mặc định:
+
+| Hệ điều hành      | Thư mục cài mặc định                                          |
+| ----------------- | ------------------------------------------------------------- |
+| Linux             | `/opt/ibm/ILOG/CPLEX_Studio<ver>`, `~/ibm/ILOG/CPLEX_Studio<ver>` |
+| macOS             | `/Applications/CPLEX_Studio<ver>`                              |
+| Windows           | `C:\Program Files\IBM\ILOG\CPLEX_Studio<ver>`                   |
+| WSL (bản Windows) | `/mnt/<ổ>/Program Files/IBM/ILOG/CPLEX_Studio<ver>`             |
+
+Cài ở chỗ khác thì đặt biến môi trường — thứ tự ưu tiên từ trên xuống:
+
+| Biến               | Trỏ tới                                                |
+| ------------------ | ------------------------------------------------------ |
+| `OPLRUN_EXEC`      | thẳng file `oplrun` (hoặc `oplrun.exe`)                 |
+| `CPOPTIMIZER_EXEC` | thẳng file `cpoptimizer` (hoặc `cpoptimizer.exe`)       |
+| `CPLEX_STUDIO_DIR` | thư mục cài CPLEX Studio — dùng chung cho cả hai chiều  |
+
+Thường chỉ cần `CPLEX_STUDIO_DIR`; hai biến kia dành cho bản cài không theo bố
+cục chuẩn. `make check` in ra đường dẫn nó dò được cho từng chiều, nên nhìn output
+là biết ngay đang gọi cái gì.
+
+Máy gốc của dự án dùng bản **Community Edition 22.2 cài trên Windows**, gọi từ WSL
+qua interop; trong trường hợp đó `tools/oplrun.sh` còn phải dịch đường dẫn Linux →
+Windows bằng `wslpath` (chạy native thì không dịch gì).
 
 > **Giới hạn Community Edition:** CP Optimizer chỉ nhận bài có không gian tìm kiếm
 > tới 2^1000. Với mã hoá nhị phân, con số đó bằng đúng số biến bool. Các mô hình
