@@ -24,8 +24,8 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from runner import (ENGINE, LANGUAGE, ROOT, load_manifest, run_companions,
-                    run_suite)  # noqa: E402
+from runner import (DIMENSIONS_ENV, ENGINE, LANGUAGE, ROOT, load_manifest,
+                    run_companions, run_suite, skipped_dimensions)  # noqa: E402
 
 MODELS = ROOT / "models"
 
@@ -125,7 +125,85 @@ def show_dimension_code(problem: str, dimension: str, **kw):
 #: thứ, và tệ hơn là hai lần đó có thể ra số khác nhau (CP-SAT đa luồng).
 _RUNS: dict[str, list] = {}
 
+#: Cảnh báo `CP_DIMENSIONS` chỉ in một lần cho cả notebook, không lặp lại mỗi bài.
+_WARNED_SKIP = False
+
 _SOURCE_MARK = {"official": "✅", "new": "✍️", "official+extended": "✅+✍️"}
+
+
+# --------------------------------------------------------------------------- #
+# Phân biệt "chiều không chạy được" với "chiều cho kết quả khác"
+#
+# Đây là ranh giới quan trọng nhất của cả file. Một bản ghi FAIL có thể đến từ hai
+# nguyên nhân hoàn toàn khác nhau, và chẩn đoán nhầm thì báo cáo gửi người đọc đi
+# sửa đúng thứ không hỏng:
+#
+#   * `status is None`  -> tiến trình con không in nổi một dòng RESULT nào. Máy này
+#     thiếu engine, hoặc lệnh chạy hỏng. KHÔNG nói lên điều gì về mô hình.
+#   * `status` có giá trị nhưng không nằm trong danh sách thành công (`Infeasible`,
+#     `Invalid`, `Timeout`, ...) -> engine đã chạy và trả lời; câu trả lời mới là
+#     thứ đáng nghi.
+#
+# Không bao giờ được dùng `x or 0` để lấp một trong hai trường hợp trên: `None or 0`
+# biến "chưa đo được" thành "đo được và bằng 0", tức là bịa ra một kết luận.
+# --------------------------------------------------------------------------- #
+
+#: Số đếm bằng chữ, cho câu văn kiểu "cả ba đều tìm được nghiệm".
+_COUNT_WORD = {2: "hai", 3: "ba", 4: "bốn", 5: "năm", 6: "sáu"}
+
+
+def _did_not_run(rec) -> bool:
+    """Chiều không chạy được: không có `status`, tức không có dòng RESULT nào."""
+    return not rec.ok and rec.status is None
+
+
+def _no_solution(rec) -> bool:
+    """Chiều chạy được nhưng không cho nghiệm hợp lệ — đây mới là tín hiệu về mô hình."""
+    return not rec.ok and rec.status is not None
+
+
+def _names(labels) -> str:
+    return ", ".join(f"`{d}`" for d in labels)
+
+
+def _subject(n: int) -> tuple[str, str]:
+    """Chủ ngữ và động từ cho câu chốt của bài CSP, theo SỐ CHIỀU THẬT SỰ có mặt.
+
+    Con số "ba" từng được viết cứng trong chuỗi, nên nhóm chỉ còn một bản ghi vẫn
+    in ra "cả ba đều tìm được nghiệm".
+    """
+    if n == 1:
+        return "chiều duy nhất", "tìm được"
+    return f"cả {_COUNT_WORD.get(n, str(n))}", "đều tìm được"
+
+
+def _blocked_note(dead: list[str], bad: list[str]) -> str:
+    """Câu từ chối kết luận, nói rõ chiều nào hỏng và hỏng theo kiểu gì."""
+    parts = []
+    if dead:
+        parts.append(f"chiều {_names(dead)} **không chạy được** "
+                     "(thiếu engine hoặc lỗi khi khởi chạy)")
+    if bad:
+        parts.append(f"chiều {_names(bad)} chạy được nhưng **không cho nghiệm hợp lệ**")
+    mark = "⚠️" if dead else "❌"
+    note = f"{mark} **KHÔNG ĐỐI CHIẾU ĐƯỢC** — " + "; ".join(parts)
+    if dead:
+        note += (". Thiếu engine KHÔNG phải lỗi mô hình; số liệu của chiều đó chưa "
+                 "tồn tại nên không có gì để so — xem `COLAB.md`")
+    return note
+
+
+def _warn_broken(recs) -> None:
+    """In cảnh báo khi có bản ghi hỏng, để ô trống trong bảng không bị hiểu nhầm."""
+    dead = [r.label or r.dimension for r in recs if _did_not_run(r)]
+    bad = [r.label or r.dimension for r in recs if _no_solution(r)]
+    if dead:
+        print(f"⚠️  Chiều {', '.join(dead)} KHÔNG chạy được trên máy này "
+              "(thiếu engine hoặc lỗi khi khởi chạy).\n"
+              "    Các ô trống bên dưới là vì chưa có số liệu, không phải vì "
+              "kết quả bằng 0 — và không phải lỗi mô hình.")
+    if bad:
+        print(f"❌  Chiều {', '.join(bad)} chạy được nhưng không cho nghiệm hợp lệ.")
 
 
 def _fmt(v):
@@ -185,7 +263,20 @@ def runs(problem: str, timeout: int = 900, refresh: bool = False) -> list:
 
     Bản phụ trợ khai ở khoá `companion` của manifest được chạy cùng, vì thiếu nó
     thì có bài không đủ ba điểm đo trên cùng một biến thể — xem PLAN.md §2.7.
+
+    Nếu `CP_DIMENSIONS` đang lọc bớt chiều, in một cảnh báo (đúng một lần cho cả
+    notebook): báo cáo thiếu chiều mà không nói gì thì tệ hơn là không chạy.
     """
+    global _WARNED_SKIP
+    missing = skipped_dimensions()
+    if missing and not _WARNED_SKIP:
+        _WARNED_SKIP = True
+        print(f"⚠️  {DIMENSIONS_ENV} đang lọc: KHÔNG chạy chiều "
+              f"{', '.join(sorted(missing))}.\n"
+              "    Mọi bảng dưới đây chỉ có số liệu của chiều còn lại, và bảng trục "
+              "so sánh nào cần chiều bị bỏ sẽ rỗng.\n"
+              "    Đây KHÔNG phải lỗi mô hình — máy này thiếu engine tương ứng "
+              "(xem COLAB.md).")
     if refresh or problem not in _RUNS:
         _RUNS[problem] = (run_suite(MODELS / problem, timeout=timeout)
                           + run_companions(MODELS / problem, timeout=timeout))
@@ -194,6 +285,7 @@ def runs(problem: str, timeout: int = 900, refresh: bool = False) -> list:
 
 def run_table(problem: str, timeout: int = 900):
     """Chạy cả ba chiều của một bài, trả về DataFrame (hoặc list dict nếu thiếu pandas)."""
+    _warn_broken(runs(problem, timeout=timeout))
     has_variants = len({r.variant for r in runs(problem, timeout=timeout)}) > 1
     rows = []
     for rec in runs(problem, timeout=timeout):
@@ -255,16 +347,21 @@ def cross_check(problem: str, timeout: int = 900):
         objs = {r.label: r.objective for r in group}
         values = [v for v in objs.values() if v is not None]
         ran = all(r.ok for r in group)
+        # Hai loại hỏng, hai chẩn đoán khác nhau — xem ghi chú ở đầu file.
+        dead = [r.label for r in group if _did_not_run(r)]
+        bad = [r.label for r in group if _no_solution(r)]
 
         if not values:  # CSP thuần: không có gì để đối chiếu
             detail = " · ".join(f"`{r.label}` → {r.status}" for r in group)
             all_ok &= ran
+            subject, verb = _subject(len(group))
             out.append(
                 f"{label}CSP thuần, không có hàm mục tiêu\n\n{detail} → "
-                + ("✅ cả ba đều tìm được nghiệm khả thi\n" if ran
-                   else "❌ **có chiều không ra nghiệm**\n")
+                + (f"{_blocked_note(dead, bad)}\n" if (dead or bad)
+                   else f"✅ {subject} {verb} nghiệm khả thi\n")
                 + "\n> Không có giá trị mục tiêu để đối chiếu, nên phép kiểm ở đây chỉ "
-                  "xác nhận **cả ba đều tìm được nghiệm**. Tính hợp lệ của từng nghiệm "
+                + ("nhằm xác nhận" if (dead or bad) else "xác nhận")
+                + f" **{subject} {verb} nghiệm**. Tính hợp lệ của từng nghiệm "
                   "do chính model tự kiểm lại theo dữ liệu gốc rồi báo qua `status`; "
                   "nghiệm sai thành `Invalid` và bị `runner.py` tính là FAIL.\n"
             )
@@ -274,6 +371,14 @@ def cross_check(problem: str, timeout: int = 900):
         if len(group) < 2:
             out.append(f"{label}{detail} → ⚠️ chỉ có một chiều, **không đối chiếu được**\n")
             all_ok &= ran
+            continue
+
+        # Có chiều hỏng thì phép so không còn cơ sở: giá trị vắng mặt không phải là
+        # một giá trị "khác", nên không được kết luận LỆCH — càng không được quy cho
+        # mô hình khi thứ thiếu chỉ là engine.
+        if dead or bad:
+            all_ok = False
+            out.append(f"{label}{detail} → {_blocked_note(dead, bad)}\n")
             continue
 
         agree = len(set(values)) == 1 and len(values) == len(group)
@@ -304,6 +409,67 @@ def _ratio(a, b):
     return round(a / b, 2)
 
 
+def _stat(rec, attr):
+    """Số liệu của một bản ghi để đưa vào bảng SO SÁNH — `None` nếu chiều đó FAIL.
+
+    Số nhánh của một lần chạy hỏng (timeout, chạm trần giấy phép, không khởi động
+    được) không phải một điểm đo: đặt nó cạnh số của lần chạy xong là mời người đọc
+    so hai thứ không so được.
+    """
+    return getattr(rec, attr) if rec.ok else None
+
+
+#: Ngưỡng chênh lệch tương đối để cột "engine nhanh hơn" dám gọi tên một bên.
+#:
+#: Cột đó quyết bằng **đúng một** lần chạy mỗi ô, trong khi thời gian đồng hồ dao
+#: động theo tải máy (PLAN.md §2.4) — số nhánh thì tất định nên không cột nào khác
+#: cần ngưỡng này. Chênh lệch nhỏ nằm gọn trong dải nhiễu: dựng lại báo cáo lúc máy
+#: bận là cột lật ngược và mâu thuẫn với văn xuôi.
+#:
+#: Con số 0.50 **đo mà ra**, không chọn cho tròn. Bài 3.1 (biến thể A) là ô sát ranh
+#: giới nhất của báo cáo — đo lặp cho `docplexcp` 2.596–2.825 s và `ortools`
+#: 2.946–4.167 s, tức trung vị chỉ chênh ~17 %. Chạy lại đúng phép so đó 6 lần trên
+#: một máy rảnh thì chênh lệch **của cùng một cặp** trải từ 16 % tới 39 %: ngưỡng
+#: 20 % hay 30 % sẽ khiến chính ô này lúc ghi "≈ ngang nhau" lúc gọi tên engine —
+#: đổi một kiểu bất định lấy một kiểu bất định khác. Cùng phép đo ấy ở bài 3.2 cho
+#: 64–80 %. Đặt ngưỡng ở 0.50 (bên chậm phải chậm hơn ít nhất **1.5×**) tách sạch
+#: hai bài, còn dư biên ở cả hai phía.
+#:
+#: Chênh lệch tương đối tính theo bên NHANH hơn. Dưới ngưỡng thì ghi "≈ ngang nhau":
+#: thà nói "một lần chạy không phân biệt được" còn hơn tuyên bố một điều lật được
+#: khi chạy lại. Muốn phân định ở dưới mức này thì phải đo lặp — xem `make bench`.
+NEGLIGIBLE_TIME_DIFF = 0.50
+
+#: Nhãn cho ô mà chênh lệch thời gian nằm dưới `NEGLIGIBLE_TIME_DIFF`.
+_TOO_CLOSE = "≈ ngang nhau"
+
+
+def _faster(cpo, sat):
+    """Engine nào giải nhanh hơn — KHÔNG đoán khi thiếu số liệu, KHÔNG phân thắng
+    bại trên chênh lệch nằm trong nhiễu.
+
+    Công thức cũ `"CP-SAT" if (sat.solve_time_s or 0) < (cpo.solve_time_s or 0)`
+    dán nhãn "CP Optimizer" cho một chiều còn chưa khởi động nổi: `None or 0` ra
+    `0`, nên `1.89 < 0` là `False` và nhánh `else` thắng. Thiếu số liệu thì phải nói
+    là thiếu, không được rơi vào nhánh mặc định.
+
+    Nó cũng gọi tên người thắng ở mọi chênh lệch, dù nhỏ đến đâu — xem
+    `NEGLIGIBLE_TIME_DIFF`.
+    """
+    broken = [r.label for r in (cpo, sat) if not r.ok]
+    if broken:
+        return f"⚠️ {', '.join(broken)} không chạy được"
+    if cpo.solve_time_s is None or sat.solve_time_s is None:
+        return None
+    lo, hi = sorted((cpo.solve_time_s, sat.solve_time_s))
+    # `lo <= 0` thì không có mẫu số để tính tỉ lệ: hai bên cùng 0 là không phân biệt
+    # được, còn 0 so với một số dương thì chênh lệch là vô hạn, gọi tên được.
+    too_close = (hi <= 0) if lo <= 0 else (hi - lo) / lo < NEGLIGIBLE_TIME_DIFF
+    if too_close:
+        return _TOO_CLOSE
+    return "CP-SAT" if sat.solve_time_s < cpo.solve_time_s else "CP Optimizer"
+
+
 def axis_tables(timeout: int = 900):
     """Dựng hai bảng trục so sánh, từ số liệu CHẠY THẬT của mọi bài.
 
@@ -315,8 +481,11 @@ def axis_tables(timeout: int = 900):
     import collections
 
     lang, eng = [], []
+    broken: list[str] = []
     for p in problems():
         recs = runs(p, timeout=timeout)
+        broken += [f"{p.split('_')[0]} · {r.label or r.dimension}"
+                   for r in recs if not r.ok]
         title = manifest(p).get("title", p)
         groups: dict[object, list] = collections.defaultdict(list)
         for r in recs:
@@ -332,21 +501,32 @@ def axis_tables(timeout: int = 900):
             if opl and cpo:
                 lang.append({
                     "bài": name, "tên": title,
-                    "OPL nhánh": opl.branches, "DOcplex.cp nhánh": cpo.branches,
-                    "OPL (s)": opl.solve_time_s, "DOcplex.cp (s)": cpo.solve_time_s,
-                    "tỉ lệ nhánh": _ratio(cpo.branches, opl.branches),
+                    "OPL nhánh": _stat(opl, "branches"),
+                    "DOcplex.cp nhánh": _stat(cpo, "branches"),
+                    "OPL (s)": _stat(opl, "solve_time_s"),
+                    "DOcplex.cp (s)": _stat(cpo, "solve_time_s"),
+                    "tỉ lệ nhánh": _ratio(_stat(cpo, "branches"),
+                                          _stat(opl, "branches")),
                 })
             # Trục ENGINE: cùng Python, khác engine.
             if cpo and sat:
                 eng.append({
                     "bài": name, "tên": title,
-                    "CPO nhánh": cpo.branches, "CP-SAT nhánh": sat.branches,
-                    "CPO (s)": cpo.solve_time_s, "CP-SAT (s)": sat.solve_time_s,
-                    "CP-SAT ít nhánh hơn": _ratio(cpo.branches, sat.branches),
-                    "engine nhanh hơn": (
-                        "CP-SAT" if (sat.solve_time_s or 0) < (cpo.solve_time_s or 0)
-                        else "CP Optimizer"),
+                    "CPO nhánh": _stat(cpo, "branches"),
+                    "CP-SAT nhánh": _stat(sat, "branches"),
+                    "CPO (s)": _stat(cpo, "solve_time_s"),
+                    "CP-SAT (s)": _stat(sat, "solve_time_s"),
+                    "CP-SAT ít nhánh hơn": _ratio(_stat(cpo, "branches"),
+                                                  _stat(sat, "branches")),
+                    "engine nhanh hơn": _faster(cpo, sat),
                 })
+
+    if broken:
+        print("⚠️  Hai bảng trục KHÔNG kết luận được ở các ô sau — chiều tương ứng "
+              "không chạy được trên máy này\n    (thiếu engine hoặc lỗi): "
+              + "; ".join(broken) + ".\n"
+              "    Ô trống nghĩa là CHƯA CÓ SỐ LIỆU, không phải bằng 0, và không "
+              "phải lỗi mô hình — xem COLAB.md.")
     return frame(lang), frame(eng)
 
 
