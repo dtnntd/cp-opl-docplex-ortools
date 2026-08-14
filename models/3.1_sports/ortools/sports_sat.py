@@ -60,8 +60,12 @@ def game_id(h: int, a: int, n: int) -> int:
     return (h - 1) * (n - 1) + a - int(a > h) - 1
 
 
-def build_and_solve(n: int, time_limit: float = 60.0, workers: int = 8, seed: int = 0,
+def build_and_solve(n: int, time_limit: float = 60.0, workers: int = 1, seed: int = 0,
                     verbose: bool = True) -> dict:
+    """Giải mô hình. Mặc định `workers = 1` và `seed = 0` để số liệu tái lập được:
+    CP-SAT chạy đa luồng thì `branches`/`conflicts` đổi giữa các lần chạy, làm bảng
+    so sánh vô nghĩa (PLAN.md §2.4). Muốn đo lợi ích đa luồng thì truyền --workers N.
+    """
     assert n % 2 == 0, "n phải chẵn"
 
     # ---- tham số suy ra, đúng như sports.mod ---------------------------------
@@ -272,6 +276,51 @@ def build_and_solve(n: int, time_limit: float = 60.0, workers: int = 8, seed: in
                         prev = 1
             print(f"T {t}:  " + " ".join(row) + f"   {brks} breaks")
 
+    if solved:
+        # Cấu trúc nghiệm cho phần vẽ hình (giao kèo SOLUTION của tools/runner.py).
+        # Mang theo CẢ HAI cách nhìn cùng một lịch: `games` là lưới tuần × trận,
+        # `team_weeks` là lịch riêng từng đội — chỉ ở cách nhìn thứ hai mới thấy
+        # được BREAK, tức là chính hàm mục tiêu. Kèm luôn `is_break` đã tính sẵn
+        # nên hình vẽ không phải dựng lại định nghĩa break.
+        opponents = {}          # (đội, tuần 0-based) -> (đối thủ, có đá sân nhà không)
+        games_out = []
+        for w in WEEKS:
+            for g in SLOTS:
+                h = int(solver.value(home[w, g]))
+                a = int(solver.value(away[w, g]))
+                games_out.append({"week": w + 1, "slot": g, "home": h, "away": a})
+                opponents[h, w] = (a, True)
+                opponents[a, w] = (h, False)
+
+        team_weeks = []
+        for t in TEAMS:
+            for w in WEEKS:
+                opp, at_home = opponents[t, w]
+                team_weeks.append({
+                    "team": t,
+                    "week": w + 1,
+                    "opponent": opp,
+                    "at_home": at_home,
+                    # break = tuần này cùng sân với tuần trước (tuần 1 không có).
+                    "is_break": w > 0 and at_home == opponents[t, w - 1][1],
+                })
+
+        print("SOLUTION " + json.dumps({
+            "problem": "sports",
+            "variant": "A",
+            "n": n,
+            "teams": list(TEAMS),
+            "nb_weeks": nb_weeks,
+            "nb_games_per_week": nb_games_per_week,
+            "total_breaks": obj,
+            "games": games_out,
+            "team_weeks": team_weeks,
+            "team_breaks": [
+                {"team": t, "breaks": int(solver.value(team_breaks[t - 1]))}
+                for t in TEAMS
+            ],
+        }))
+
     return {
         "status": solver.status_name(status),
         "objective": obj,
@@ -293,7 +342,8 @@ def _parse_args() -> argparse.Namespace:
                     help="file .dat của OPL (mặc định data/sports/sports.dat)")
     ap.add_argument("--n", type=int, default=None, help="ghi đè số đội")
     ap.add_argument("--time-limit", type=float, default=60.0)
-    ap.add_argument("--workers", type=int, default=8)
+    # Mặc định 1 worker + seed cố định: số liệu phải tái lập được (PLAN.md §2.4).
+    ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--quiet", action="store_true")
     return ap.parse_args()

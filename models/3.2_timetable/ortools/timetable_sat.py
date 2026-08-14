@@ -14,6 +14,9 @@ Chạy:
     python3 models/3.2_timetable/ortools/timetable_sat.py \\
         data/timetable/base.dat data/timetable/large.dat
 
+    # cờ tuỳ chọn: --workers N (mặc định 1), --seed S (mặc định 0). Giữ nguyên mặc
+    # định khi đo benchmark — đa luồng làm số liệu không tái lập được (PLAN.md §2.4).
+
 KHÁC BIỆT MÃ HOÁ SO VỚI BẢN OPL (điểm so sánh cốt lõi của bài này)
 ------------------------------------------------------------------
 Bản OPL gốc diễn đạt "tài nguyên chỉ dùng một lần tại mỗi thời điểm" bằng TỔNG CÓ
@@ -52,8 +55,12 @@ Instance = collections.namedtuple(
 )
 
 
-def build_and_solve(dat_files: list[str], time_limit: float = 300.0, workers: int = 8,
+def build_and_solve(dat_files: list[str], time_limit: float = 300.0, workers: int = 1,
                     seed: int = 0) -> dict:
+    """Giải mô hình. Mặc định `workers = 1` và `seed = 0` để số liệu tái lập được:
+    CP-SAT chạy đa luồng thì `branches`/`conflicts` đổi giữa các lần chạy, làm bảng
+    benchmark vô nghĩa (PLAN.md §2.4). Muốn đo lợi ích đa luồng thì truyền --workers N.
+    """
     d = load(*dat_files)
 
     # ---- từ vựng, dựng đúng như phần đầu timetabling.mod ---------------------
@@ -328,12 +335,53 @@ def build_and_solve(dat_files: list[str], time_limit: float = 300.0, workers: in
                     f"  {inst.discipline:<10} {teachers[solver.value(teacher[i])]:<14}"
                     f" phòng {rooms[solver.value(room[i])]}"
                 )
+
+        # Cấu trúc nghiệm cho phần vẽ hình (giao kèo SOLUTION của tools/runner.py).
+        # `start` là một mốc thời gian phẳng 0..MaxTime-1; kèm `day_duration` và
+        # `nb_days` để hình vẽ quy được về (ngày, tiết) mà không phải đọc lại
+        # base.dat/large.dat. `class_busy` là các ô lớp KHÔNG được xếp (RB8) —
+        # thiếu nó thì các ô trống trong lưới trông như lịch xếp lười.
+        print("SOLUTION " + json.dumps({
+            "problem": "timetable",
+            "makespan": int(solver.value(makespan)),
+            "day_duration": day_duration,
+            "nb_days": nb_days,
+            "classes": classes,
+            "sessions": [
+                {
+                    "class": instances[i].cls,
+                    "discipline": instances[i].discipline,
+                    "teacher": teachers[solver.value(teacher[i])],
+                    "room": rooms[solver.value(room[i])],
+                    "start": int(solver.value(start[i])),
+                    "duration": instances[i].duration,
+                }
+                for i in range(n)
+            ],
+            "class_busy": [
+                {"class": who, "time": int(t)} for who, t in d.get("ClassBusySet", [])
+            ],
+        }))
     return result
 
 
+def _take(argv: list[str], flag: str, default: str) -> str:
+    """Rút một cờ `--flag <giá trị>` khỏi argv, trả về giá trị (hoặc mặc định)."""
+    if flag in argv:
+        i = argv.index(flag)
+        value = argv[i + 1]
+        del argv[i : i + 2]
+        return value
+    return default
+
+
 if __name__ == "__main__":
-    files = [a for a in sys.argv[1:] if a.endswith(".dat")]
+    argv = sys.argv[1:]
+    # Mặc định 1 worker + seed cố định: số liệu phải tái lập được (PLAN.md §2.4).
+    WORKERS = int(_take(argv, "--workers", "1"))
+    SEED = int(_take(argv, "--seed", "0"))
+    files = [a for a in argv if a.endswith(".dat")]
     if not files:
         files = ["data/timetable/base.dat", "data/timetable/large.dat",
                  "data/timetable/availability.dat"]
-    print("RESULT " + json.dumps(build_and_solve(files)))
+    print("RESULT " + json.dumps(build_and_solve(files, workers=WORKERS, seed=SEED)))

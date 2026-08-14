@@ -14,6 +14,9 @@ GHI CHÚ ENGINE (điểm so sánh với DOcplex.cp — cùng Python, khác engin
   SAT + lazy clause generation, nên báo số CONFLICTS (xung đột học được) thay vì
   FAILS (nhánh chết) như CP Optimizer. Hai con số này KHÔNG so sánh trực tiếp
   được với nhau — chúng đếm hai thứ khác nhau.
+
+  CP-SAT chạy đa luồng nên số liệu đổi giữa các lần chạy; ở đây cố định
+  num_search_workers=1 và random_seed=0 để con số trong NOTES.md tái lập được.
 """
 
 import json
@@ -34,6 +37,8 @@ model.add_all_different(queens[i] - i for i in range(BOARD_SIZE))        # khác
 
 solver = cp_model.CpSolver()
 solver.parameters.max_time_in_seconds = 60.0
+solver.parameters.num_search_workers = 1   # tái lập được số liệu (xem docstring)
+solver.parameters.random_seed = 0
 status = solver.solve(model)
 
 if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -41,6 +46,14 @@ if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
     print("QUEENS", cols)
     for row in range(BOARD_SIZE):
         print(" ".join("Q" if c == cols[row] else "." for c in range(BOARD_SIZE)))
+
+    # Cấu trúc nghiệm cho phần vẽ hình (giao kèo SOLUTION của tools/runner.py).
+    # `queens[i]` = cột của hậu ở hàng i — đủ để dựng lại cả bàn cờ.
+    print("SOLUTION " + json.dumps({
+        "problem": "nqueens",
+        "n": BOARD_SIZE,
+        "queens": cols,
+    }))
 
 print("RESULT " + json.dumps({
     "status": solver.status_name(status),
