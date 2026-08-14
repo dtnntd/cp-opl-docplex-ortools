@@ -122,6 +122,29 @@ if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
     starts = [[solver.value(start[j, o]) for o in range(NB_MACHINES)] for j in range(NB_JOBS)]
     for j in range(NB_JOBS):
         print(" ".join(str(s) for s in starts[j]))
+
+    # Cấu trúc nghiệm cho phần vẽ hình (giao kèo SOLUTION của tools/runner.py).
+    # Mỗi tác vụ tự mang đủ (job, máy, bắt đầu, thời lượng) nên biểu đồ Gantt
+    # dựng được mà không phải đọc lại ft06.dat.
+    print("SOLUTION " + json.dumps({
+        "problem": "jobshop",
+        "instance": pathlib.Path(DATA).stem,
+        "nb_jobs": NB_JOBS,
+        "nb_machines": NB_MACHINES,
+        "makespan": obj,
+        "tasks": [
+            {
+                "job": j,
+                "op": o,
+                "machine": MACHINES[j][o],
+                "start": starts[j][o],
+                "duration": DURATION[j][o],
+            }
+            for j in range(NB_JOBS)
+            for o in range(NB_MACHINES)
+        ],
+    }))
+
     if gantt_path:
         out = jobshop_data.write_gantt(
             gantt_path, NB_JOBS, NB_MACHINES, MACHINES, starts, DURATION,

@@ -97,6 +97,18 @@ if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         print(f"   {c}: {COLOR_NAMES[assign[c]]}")
     print(f"CHECK violations={len(violations)} colorsUsed={colors_used}"
           f" (dữ liệu chung: {len(COUNTRIES)} đỉnh, {len(EDGES)} cạnh, {NB_COLORS} màu)")
+
+    # Cấu trúc nghiệm cho phần vẽ hình (giao kèo SOLUTION của tools/runner.py).
+    # Kèm luôn đỉnh và cạnh: hình vẽ dựng được mà không phải đọc lại map6.dat.
+    print("SOLUTION " + json.dumps({
+        "problem": "graph_coloring",
+        "vertices": COUNTRIES,
+        "edges": [list(e) for e in EDGES],
+        "color_names": COLOR_NAMES,
+        "assignment": {c: assign[c] for c in COUNTRIES},
+        "colors_used": colors_used,
+        "violations": len(violations),
+    }))
 else:
     print("No solution found")
 

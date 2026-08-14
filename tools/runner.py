@@ -16,6 +16,15 @@ DOcplex.cp in log CP Optimizer còn OR-Tools in log CP-SAT — ba định dạng
 nhau. Nếu model không in RESULT, runner sẽ lùi về đọc log CP Optimizer (dùng
 được cho cả chiều opl lẫn docplexcp vì chung engine).
 
+Model CÓ THỂ in thêm đúng một dòng TUỲ CHỌN nữa:
+
+    SOLUTION {"...": ...}
+
+Đây là CẤU TRÚC NGHIỆM để vẽ hình (bàn cờ, biểu đồ Gantt, lưới ca trực), không
+phải số liệu so sánh — nên nó đi vào `RunRecord.solution` rồi bị loại khỏi CSV
+và JSON xuất ra, giống `stdout_tail`. Model không in dòng này thì mọi thứ chạy
+y như cũ; `solution` khi đó là `None`.
+
 Dùng như CLI:
     tools/runner.py opl       models/2.1_jobshop/opl/jobshop.mod data/jobshop/ft06.dat
     tools/runner.py ortools   models/2.1_jobshop/ortools/jobshop_sat.py
@@ -29,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -55,6 +65,44 @@ LANGUAGE = {
 }
 
 _RESULT_RE = re.compile(r"^RESULT\s+(\{.*\})\s*$", re.MULTILINE)
+_SOLUTION_RE = re.compile(r"^SOLUTION\s+(\{.*\})\s*$", re.MULTILINE)
+
+#: Tên biến môi trường chọn tập chiều được chạy trong phiên hiện tại.
+DIMENSIONS_ENV = "CP_DIMENSIONS"
+
+
+def enabled_dimensions() -> frozenset[str]:
+    """Các chiều được phép chạy trong phiên này.
+
+    Đặt biến môi trường `CP_DIMENSIONS` (danh sách ngăn bằng dấu phẩy) để bỏ chiều
+    không có engine trên máy đang chạy — ví dụ trên Google Colab, nơi không có
+    CPLEX Studio nên hai chiều dùng engine CP Optimizer đều vô nghĩa::
+
+        CP_DIMENSIONS=ortools
+
+    Không đặt biến này thì cả ba chiều đều chạy, y hệt như trước.
+
+    Bỏ HẲN một chiều khác với để nó chạy rồi FAIL: bản ghi FAIL vẫn lọt vào bảng
+    với `solve_time_s = None`, và mọi hàm hạ nguồn phải tự đoán xem con số trống
+    đó nghĩa là gì. Vắng mặt thì không có gì để đoán.
+    """
+    raw = os.environ.get(DIMENSIONS_ENV, "").strip()
+    if not raw:
+        return frozenset(ENGINE)
+    names = frozenset(n.strip() for n in raw.split(",") if n.strip())
+    unknown = names - frozenset(ENGINE)
+    if unknown:
+        raise ValueError(
+            f"{DIMENSIONS_ENV} có chiều không hợp lệ: {', '.join(sorted(unknown))} "
+            f"(chọn trong: {', '.join(sorted(ENGINE))})"
+        )
+    return names
+
+
+def skipped_dimensions() -> frozenset[str]:
+    """Các chiều bị `CP_DIMENSIONS` loại ra — dùng để in cảnh báo."""
+    return frozenset(ENGINE) - enabled_dimensions()
+
 
 #: Các giá trị `status` được tính là chạy thành công, so khớp không phân biệt hoa thường.
 #:
@@ -121,12 +169,19 @@ class RunRecord:
     wall_s: float = 0.0
     community_limit_hit: bool = False
     extra: dict[str, Any] = field(default_factory=dict)
+    #: Cấu trúc nghiệm do model in ra ở dòng `SOLUTION` — DỮ LIỆU ĐỂ VẼ, không
+    #: phải số liệu so sánh. `None` khi model không in dòng đó (đa số model).
+    solution: dict[str, Any] | None = None
     stdout_tail: str = ""
 
     def as_row(self) -> dict[str, Any]:
         d = asdict(self)
         d.pop("stdout_tail", None)
         d.pop("extra", None)
+        # Nghiệm là dữ liệu để VẼ, không phải một điểm đo: nhét cả bàn cờ hay cả
+        # lịch job-shop vào một ô CSV thì bảng số liệu hết đọc được, mà cũng
+        # chẳng so sánh được với gì.
+        d.pop("solution", None)
         return d
 
 
@@ -193,6 +248,16 @@ def run(
     combined = out + "\n" + err
     rec.community_limit_hit = _hit_community_limit(dimension, combined)
 
+    # Dòng SOLUTION là TUỲ CHỌN và độc lập với RESULT: nó chỉ nuôi phần vẽ hình
+    # (tools/nbviz.py). JSON hỏng thì bỏ qua, không được làm hỏng cả bản ghi số
+    # liệu — một cái hình không vẽ được không phải lý do để mất một điểm đo.
+    ms = _SOLUTION_RE.search(out)
+    if ms:
+        try:
+            rec.solution = json.loads(ms.group(1))
+        except json.JSONDecodeError:
+            rec.solution = None
+
     # Ưu tiên dòng RESULT do model tự in.
     m = _RESULT_RE.search(out)
     if m:
@@ -241,11 +306,16 @@ def load_manifest(problem_dir: str | pathlib.Path) -> dict[str, Any]:
 
 
 def run_suite(problem_dir: str | pathlib.Path, timeout: int = 600) -> list[RunRecord]:
-    """Chạy mọi chiều khai báo trong manifest.json của một bài."""
+    """Chạy mọi chiều khai báo trong manifest.json của một bài.
+
+    Chiều bị `CP_DIMENSIONS` loại ra thì không sinh bản ghi nào — xem
+    `enabled_dimensions()`.
+    """
     manifest = load_manifest(problem_dir)
+    enabled = enabled_dimensions()
     records: list[RunRecord] = []
     for dim, spec in manifest["dimensions"].items():
-        if spec.get("skip"):
+        if spec.get("skip") or dim not in enabled:
             continue
         records.append(
             run(
@@ -271,13 +341,14 @@ def run_companions(problem_dir: str | pathlib.Path, timeout: int = 600) -> list[
     trên cùng một bài toán.
     """
     manifest = load_manifest(problem_dir)
+    enabled = enabled_dimensions()
     records: list[RunRecord] = []
     for name, spec in manifest.get("companion", {}).items():
         if spec.get("skip"):
             continue
         # Tên bản phụ trợ có dạng "<chiều>_<hậu tố>", ví dụ "docplexcp_portA".
         dim = next((d for d in ENGINE if name.startswith(d)), None)
-        if dim is None:
+        if dim is None or dim not in enabled:
             continue
         records.append(
             run(
@@ -306,6 +377,18 @@ def _main() -> int:
     ap.add_argument("args", nargs="*")
     a = ap.parse_args()
 
+    try:
+        missing = skipped_dimensions()
+    except ValueError as exc:      # gõ sai tên chiều — báo gọn, đừng đổ traceback
+        print(f"Lỗi: {exc}", file=sys.stderr)
+        return 2
+    if missing:
+        print(
+            f"[{DIMENSIONS_ENV}] KHÔNG chạy chiều: {', '.join(sorted(missing))} "
+            f"— kết quả dưới đây thiếu chiều đó, không phải chiều đó hỏng.",
+            file=sys.stderr,
+        )
+
     if a.all:
         records = []
         for manifest in sorted((ROOT / "models").glob("*/manifest.json")):
@@ -333,7 +416,7 @@ def _main() -> int:
         pathlib.Path(a.json).write_text(
             json.dumps([r.as_row() for r in records], indent=2, ensure_ascii=False)
         )
-    if a.csv:
+    if a.csv and records:
         import csv
 
         rows = [r.as_row() for r in records]

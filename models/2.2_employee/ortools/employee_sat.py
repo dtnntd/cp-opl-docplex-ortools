@@ -152,6 +152,26 @@ def build_and_solve(dat_file: str, workers: int = 1, seed: int = 0) -> dict:
                          for d in all_days for s in all_shifts)
             print(f"  {employees[n]}\t{load_n} ca")
 
+        # Cấu trúc nghiệm cho phần vẽ hình (giao kèo SOLUTION của
+        # tools/runner.py). Kèm ba danh sách tên nên lưới vẽ được mà không phải
+        # đọc lại employee.dat; `requested` nói ô đó có đúng nguyện vọng không.
+        print("SOLUTION " + json.dumps({
+            "problem": "employee",
+            "employees": employees,
+            "days": day_names,
+            "shifts": shift_names,
+            "assignments": [
+                {"employee": n, "day": d, "shift": s,
+                 "requested": bool(shift_requests[n][d][s])}
+                for d in all_days
+                for s in all_shifts
+                for n in all_nurses
+                if solver.value(shifts[(n, d, s)]) == 1
+            ],
+            "nb_requests": sum(map(sum, (map(sum, r) for r in shift_requests))),
+            "granted": int(solver.objective_value),
+        }))
+
     return {
         "status": solver.status_name(status),
         "objective": int(solver.objective_value) if ok else None,
