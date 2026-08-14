@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark bài 3.2 — ba chiều × ba cấu hình dữ liệu.
+"""Benchmark bài 3.2 — ba chiều × bốn cấu hình dữ liệu.
 
 Đây là bài DUY NHẤT của báo cáo có đo hiệu năng định lượng. Ba chiều được xếp để
 mỗi phép so chỉ đổi đúng MỘT biến số:
@@ -10,10 +10,14 @@ mỗi phép so chỉ đổi đúng MỘT biến số:
                                                 ├─ so cặp này -> cô lập ENGINE
     ortools    CP-SAT        interval           ┘
 
-Chạy:  python3 tools/bench_timetable.py [--reps 3] [--csv results/bench.csv]
+Chạy:  python3 tools/bench_timetable.py [--reps 5] [--csv results/bench.csv]
 
-Mỗi (cấu hình, chiều) chạy lặp nhiều lần và lấy TRUNG VỊ, vì CP-SAT chạy đa luồng
-nên số liệu đổi giữa các lần chạy (xem PLAN.md §2.4).
+Bốn cấu hình là tích Descartes {gốc, +availability} × {small, large} — bảng 2×2,
+bỏ bớt một ô là hỏng phép so (PLAN.md §WP6).
+
+Mỗi (cấu hình, chiều) chạy lặp ít nhất 5 lần và lấy TRUNG VỊ: CP-SAT chạy đa luồng
+thì số liệu đổi giữa các lần chạy, nên 5 là SÀN chứ không phải mặc định hạ xuống
+được (xem PLAN.md §2.4).
 """
 
 from __future__ import annotations
@@ -31,8 +35,16 @@ D = "data/timetable"
 
 #: Cấu hình dữ liệu. Chiều OPL cần file availability rỗng thay vì bỏ trống tham số,
 #: vì OPL bắt buộc mọi phần tử khai bằng `...` phải có giá trị.
+#:
+#: Hai bộ dữ liệu dùng HAI file availability khác nhau, và phải như vậy:
+#: `availability.dat` viết cho bộ large (Time = 0..47, đủ 8 môn), đem chạy với bộ
+#: small (Time = 0..23, ba môn) thì mọi mốc nằm ngoài tầm nên không cắt gì —
+#: ô `small+avail` khi đó cho số trùng khít từng chữ số với ô `small`.
+#: `availability_small.dat` là bản đúng tầm bộ small, giữ nguyên mật độ mốc/buổi
+#: học của bản large để hai ô "+avail" là cùng một loại can thiệp.
 CONFIGS = {
     "small":       {"data": f"{D}/small.dat", "avail": None},
+    "small+avail": {"data": f"{D}/small.dat", "avail": f"{D}/availability_small.dat"},
     "large":       {"data": f"{D}/large.dat", "avail": None},
     "large+avail": {"data": f"{D}/large.dat", "avail": f"{D}/availability.dat"},
 }
@@ -67,7 +79,8 @@ def args_for(dimension: str, config: str) -> list[str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--reps", type=int, default=3, help="số lần chạy mỗi ô (mặc định 3)")
+    ap.add_argument("--reps", type=int, default=5,
+                    help="số lần chạy mỗi ô (mặc định 5 — sàn theo PLAN.md §2.4)")
     ap.add_argument("--csv", default="results/bench.csv")
     ap.add_argument("--timeout", type=int, default=900)
     a = ap.parse_args()

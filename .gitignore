@@ -8,5 +8,12 @@ results/*.json
 results/*.csv
 report/html/
 
+# Ngoại lệ: `results/bench.csv` PHẢI theo dõi. Nó chỉ sinh lại bằng `make bench`
+# (cần đủ ba engine, mất vài phút), trong khi `notebooks/99_comparison.ipynb` đọc
+# thẳng file này — thiếu nó thì `nbconvert --execute` chết vì FileNotFoundError
+# ngay sau khi clone. `results/runs.csv` và `results/*.json` thì notebook tự sinh
+# lại mỗi lần chạy nên vẫn để ngoài git.
+!results/bench.csv
+
 # Ví dụ chính thức của IBM, lấy về bằng sparse clone (xem PLAN.md §1)
 vendor/

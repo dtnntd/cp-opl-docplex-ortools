@@ -1,0 +1,70 @@
+/* Bài 3.2 — dữ liệu ràng buộc khả dụng (availability windows) cho bộ SMALL.
+ *
+ * VÌ SAO CẦN FILE RIÊNG
+ * ---------------------
+ * `availability.dat` được viết cho bộ `large` (8 ngày × 6 tiết => Time = 0..47,
+ * đủ 8 môn, đủ 8 giáo viên). Đem nguyên file đó chạy với bộ `small` thì mọi mốc
+ * đều rơi ra ngoài tầm dữ liệu:
+ *
+ *   - `ClassBusySet` có <"Z",42..44> và <"X",29>, mà bộ small chỉ có
+ *     4 ngày × 6 tiết = Time 0..23  ->  không mốc nào nằm trong tầm;
+ *   - `DisciplineAvoidSet` toàn môn Sport, mà small chỉ học French/Maths/Physics;
+ *   - `TeacherBusySet` gọi Patrick (Sport), Odile (Economy), Marie-Laure
+ *     (Geography, History), Paul (Physics) — trong đó chỉ Paul dạy môn có trong
+ *     small, mà ba mốc của Paul (t = 33..35) cũng vượt tầm.
+ *
+ * Kết quả: ràng buộc vẫn được sinh ra nhưng KHÔNG cắt gì cả — ô `small+avail`
+ * của lưới benchmark 2×2 cho số trùng khít từng chữ số với ô `small`. Ràng buộc
+ * khả dụng chỉ có nghĩa khi mốc thời gian và tên tài nguyên nằm trong tầm của
+ * chính bộ dữ liệu đang chạy; file này là bản đúng tầm bộ small.
+ *
+ * QUY ƯỚC THỜI GIAN, khớp với base.dat + small.dat:
+ *   DayDuration = 6, NumberOfDaysPerPeriod = 4  =>  Time = 0..23
+ *   ngày d chiếm t = 6d .. 6d+5 ; buổi sáng = 3 tiết đầu, buổi chiều = 3 tiết sau
+ *   ngày đánh số từ 0 (d = 0..3), y như chú thích của availability.dat
+ *
+ * MẬT ĐỘ — giữ tương xứng với bản large để phép so "small vs large" là so cùng
+ * MỘT LOẠI can thiệp, chứ không so nặng với nhẹ:
+ *   large: 106 buổi học, 27 mốc  ->  0.255 mốc/buổi, chia 15 : 4 : 8 (RB7:RB8:RB4)
+ *   small:  22 buổi học          ->  22 × 0.255 ≈ 5.6, làm tròn 6 mốc,
+ *                                    chia theo đúng tỉ lệ trên -> 3 : 1 : 2
+ * (tính theo tiết thay vì theo buổi cũng ra cùng chỗ: large 27/130 = 0.208,
+ *  small 6/30 = 0.200.)
+ *
+ * MỌI MỐC ĐỀU CẮT THẬT. Với từng mốc trong sáu mốc dưới đây, bộ small KHÔNG có
+ * ràng buộc khả dụng vẫn có lịch tối ưu (makespan 20) dùng đúng ô đó — nghĩa là
+ * mốc đó loại bỏ nghiệm có thật, không phải ràng buộc thừa. Bài vẫn có nghiệm:
+ * makespan tối ưu chỉ xấu đi 20 -> 21, tương tự bản large (44 -> 47).
+ */
+
+// RB7 — giáo viên bận.
+// Pierre là giáo viên nặng tải nhất của bộ small: anh dạy toàn bộ French, tức
+// 10 buổi / 14 tiết trên tổng 30 tiết. Nghỉ trọn một buổi sáng là can thiệp đủ
+// sâu để thấy được ở makespan, tương ứng với những buổi nghỉ nửa ngày của Odile
+// và Marie-Laure ở bản large.
+TeacherBusySet = {
+  // Pierre (French) đi tập huấn sáng ngày 2
+  <"Pierre", 12>, <"Pierre", 13>, <"Pierre", 14>
+};
+
+// RB8 — lớp bận.
+// Chép đúng mô-típ <"X",29> của bản large (một tiết cuối ngày dành cho sinh hoạt
+// lớp), dời về trong tầm 0..23.
+ClassBusySet = {
+  // Lớp X sinh hoạt lớp tiết cuối ngày 1
+  <"X", 11>
+};
+
+// RB4 — khung giờ cần tránh cho môn.
+// Bản large tránh Sport ở tiết cuối buổi chiều; mô-típ đó KHÔNG bê sang small
+// được, vì small không học Sport. Chọn Maths — môn nặng nhất của bộ small (lớp X
+// học 2 tiết × 4 lần) — và giữ đúng ý "không xếp môn nặng vào tiết cuối ngày".
+// Chọn Maths cũng tránh được cái bẫy của bản large: ở đó Sport đã bị
+// MorningDiscipline ép vào buổi sáng nên các mốc <"Sport", 5|11|...> là ràng
+// buộc THỪA, không loại thêm nghiệm nào (bỏ hẳn DisciplineAvoidSet khỏi bản
+// large cho đúng cùng một kết quả: makespan 47, 13 305 nhánh, 183 conflicts).
+// Maths không nằm trong MorningDiscipline nên hai mốc dưới đây cắt thật.
+DisciplineAvoidSet = {
+  // Không xếp Maths vào tiết cuối ngày 0 và ngày 2
+  <"Maths", 5>, <"Maths", 17>
+};

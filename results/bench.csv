@@ -1,0 +1,61 @@
+config,dimension,engine,encoding,rep,ok,objective,solve_time_s,branches,fails,wall_s
+small,opl,CP Optimizer,đếm có điều kiện,1,True,20,0.404,30412,12917,0.76
+small,opl,CP Optimizer,đếm có điều kiện,2,True,20,0.352,30412,12917,0.727
+small,opl,CP Optimizer,đếm có điều kiện,3,True,20,0.39,30412,12917,0.745
+small,opl,CP Optimizer,đếm có điều kiện,4,True,20,0.431,30412,12917,0.802
+small,opl,CP Optimizer,đếm có điều kiện,5,True,20,0.282,30412,12917,0.706
+small,docplexcp,CP Optimizer,interval,1,True,20,0.435,75025,33825,1.297
+small,docplexcp,CP Optimizer,interval,2,True,20,0.478,75025,33825,1.381
+small,docplexcp,CP Optimizer,interval,3,True,20,0.426,75025,33825,1.297
+small,docplexcp,CP Optimizer,interval,4,True,20,0.428,75025,33825,1.369
+small,docplexcp,CP Optimizer,interval,5,True,20,0.44,75025,33825,1.299
+small,ortools,CP-SAT,interval,1,True,20,0.0513,553,4,0.793
+small,ortools,CP-SAT,interval,2,True,20,0.0505,553,4,0.787
+small,ortools,CP-SAT,interval,3,True,20,0.0476,553,4,0.805
+small,ortools,CP-SAT,interval,4,True,20,0.0507,553,4,0.753
+small,ortools,CP-SAT,interval,5,True,20,0.0569,553,4,0.756
+small+avail,opl,CP Optimizer,đếm có điều kiện,1,True,21,0.47,45176,20250,0.813
+small+avail,opl,CP Optimizer,đếm có điều kiện,2,True,21,0.431,45176,20250,0.772
+small+avail,opl,CP Optimizer,đếm có điều kiện,3,True,21,0.5,45176,20250,0.84
+small+avail,opl,CP Optimizer,đếm có điều kiện,4,True,21,0.45,45176,20250,0.798
+small+avail,opl,CP Optimizer,đếm có điều kiện,5,True,21,0.484,45176,20250,0.819
+small+avail,docplexcp,CP Optimizer,interval,1,True,21,0.382,61824,26221,1.229
+small+avail,docplexcp,CP Optimizer,interval,2,True,21,0.425,61824,26221,1.351
+small+avail,docplexcp,CP Optimizer,interval,3,True,21,0.357,61824,26221,1.227
+small+avail,docplexcp,CP Optimizer,interval,4,True,21,0.364,61824,26221,1.197
+small+avail,docplexcp,CP Optimizer,interval,5,True,21,0.35,61824,26221,1.19
+small+avail,ortools,CP-SAT,interval,1,True,21,0.072,549,4,0.919
+small+avail,ortools,CP-SAT,interval,2,True,21,0.0585,549,4,0.775
+small+avail,ortools,CP-SAT,interval,3,True,21,0.0613,549,4,0.791
+small+avail,ortools,CP-SAT,interval,4,True,21,0.0577,549,4,0.756
+small+avail,ortools,CP-SAT,interval,5,True,21,0.064,549,4,0.853
+large,opl,CP Optimizer,đếm có điều kiện,1,True,44,17.938,216066,96460,19.802
+large,opl,CP Optimizer,đếm có điều kiện,2,True,44,17.092,216066,96460,19.078
+large,opl,CP Optimizer,đếm có điều kiện,3,True,44,17.633,216066,96460,19.44
+large,opl,CP Optimizer,đếm có điều kiện,4,True,44,18.004,216066,96460,19.878
+large,opl,CP Optimizer,đếm có điều kiện,5,True,44,18.17,216066,96460,19.903
+large,docplexcp,CP Optimizer,interval,1,True,44,0.687,34194,7037,1.639
+large,docplexcp,CP Optimizer,interval,2,True,44,0.639,34194,7037,1.666
+large,docplexcp,CP Optimizer,interval,3,True,44,0.666,34194,7037,1.628
+large,docplexcp,CP Optimizer,interval,4,True,44,0.67,34194,7037,1.598
+large,docplexcp,CP Optimizer,interval,5,True,44,0.64,34194,7037,1.611
+large,ortools,CP-SAT,interval,1,True,44,2.5603,15439,236,3.462
+large,ortools,CP-SAT,interval,2,True,44,2.521,15439,236,3.355
+large,ortools,CP-SAT,interval,3,True,44,2.5243,15439,236,3.317
+large,ortools,CP-SAT,interval,4,True,44,2.4955,15439,236,3.297
+large,ortools,CP-SAT,interval,5,True,44,2.5636,15439,236,3.422
+large+avail,opl,CP Optimizer,đếm có điều kiện,1,True,47,8.379,125151,55086,10.225
+large+avail,opl,CP Optimizer,đếm có điều kiện,2,True,47,8.498,125151,55086,10.206
+large+avail,opl,CP Optimizer,đếm có điều kiện,3,True,47,8.781,125151,55086,10.545
+large+avail,opl,CP Optimizer,đếm có điều kiện,4,True,47,8.596,125151,55086,10.311
+large+avail,opl,CP Optimizer,đếm có điều kiện,5,True,47,8.677,125151,55086,10.371
+large+avail,docplexcp,CP Optimizer,interval,1,True,47,1.499,154818,59201,2.476
+large+avail,docplexcp,CP Optimizer,interval,2,True,47,1.496,154818,59201,2.43
+large+avail,docplexcp,CP Optimizer,interval,3,True,47,1.445,154818,59201,2.399
+large+avail,docplexcp,CP Optimizer,interval,4,True,47,1.551,154818,59201,2.495
+large+avail,docplexcp,CP Optimizer,interval,5,True,47,1.461,154818,59201,2.415
+large+avail,ortools,CP-SAT,interval,1,True,47,2.418,13305,183,3.277
+large+avail,ortools,CP-SAT,interval,2,True,47,2.4451,13305,183,3.254
+large+avail,ortools,CP-SAT,interval,3,True,47,2.4705,13305,183,3.285
+large+avail,ortools,CP-SAT,interval,4,True,47,2.3701,13305,183,3.225
+large+avail,ortools,CP-SAT,interval,5,True,47,2.3982,13305,183,3.28
