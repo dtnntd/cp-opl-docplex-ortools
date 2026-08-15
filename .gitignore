@@ -17,3 +17,7 @@ report/html/
 
 # Ví dụ chính thức của IBM, lấy về bằng sparse clone (xem PLAN.md §1)
 vendor/
+
+# Tài liệu quy trình nội bộ — brief đặc tả và checklist giao việc. Giữ ở máy,
+# không đẩy lên: repo công bố là BÁO CÁO, không phải nhật ký quá trình làm ra nó.
+CP_report_brief.md

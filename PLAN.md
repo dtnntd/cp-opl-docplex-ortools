@@ -1,8 +1,8 @@
 # Kế hoạch thi công báo cáo CP
 
-Tài liệu này biến [`CP_report_brief.md`](CP_report_brief.md) thành các gói việc chạy
-được. Brief giữ vai trò đặc tả nội dung; file này nói **làm gì, theo thứ tự nào,
-xong khi nào thì tính là xong**.
+Tài liệu này biến bản đặc tả nội dung (brief, giữ ở máy — không theo git) thành các
+gói việc chạy được. Brief chốt *báo cáo phải có gì*; file này nói **làm gì, theo thứ
+tự nào, xong khi nào thì tính là xong**.
 
 Quyết định phạm vi đã chốt:
 
@@ -341,7 +341,7 @@ ngay bên dưới, không có đường nào để hai thứ lệch nhau.
   - [x] không file nào import `docplex.mp` *(quét toàn repo: chỉ nhắc tên trong văn
         xuôi để phân biệt paradigm, không có import nào)*
   - [x] mọi link trích dẫn còn sống *(21 URL trích trong `README.md`, `PLAN.md`,
-        `CP_report_brief.md` và 6 `NOTES.md` — kiểm ngày 2026-08-14, tất cả trả
+        bản brief và 6 `NOTES.md` — kiểm ngày 2026-08-14, tất cả trả
         HTTP 200 sau khi theo redirect; trang IBM docs có lúc trả 503 tạm thời,
         thử lại 3 lần đều 200)*
   - [x] bảng ✅/✍️ trong báo cáo khớp `manifest.json` *(bảng được **sinh** từ manifest

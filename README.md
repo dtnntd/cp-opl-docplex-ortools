@@ -4,8 +4,7 @@ So sánh cách triển khai Constraint Programming trên ba chiều, qua 6 bài 
 
 📄 **Đọc bản đã dựng: https://dtnntd.github.io/cp-opl-docplex-ortools/**
 
-Đặc tả nội dung nằm ở [`CP_report_brief.md`](CP_report_brief.md); kế hoạch thi công
-và phân phối công việc nằm ở [`PLAN.md`](PLAN.md).
+Kế hoạch thi công và phân phối công việc nằm ở [`PLAN.md`](PLAN.md).
 
 ## Vì sao ba chiều
 
