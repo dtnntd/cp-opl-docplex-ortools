@@ -91,7 +91,7 @@ data/          dữ liệu dùng CHUNG cho cả ba chiều của mỗi bài
 models/<bài>/  opl/ · docplexcp/ · ortools/ · manifest.json · NOTES.md
 notebooks/     5 notebook: intro + 3 phần + tổng hợp
 report/        script build và HTML xuất ra
-results/       số liệu chạy được (json/csv)
+results/       số liệu chạy được (runs.json/csv) + tập nghiệm (solutions.json)
 tools/         oplrun.sh · cpo_env.py · runner.py · check_env.py
 vendor/docplex ví dụ CP chính thức của IBM (sparse clone, chỉ examples/cp)
 ```

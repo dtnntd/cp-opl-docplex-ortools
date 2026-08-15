@@ -22,8 +22,8 @@ Model CÓ THỂ in thêm đúng một dòng TUỲ CHỌN nữa:
 
 Đây là CẤU TRÚC NGHIỆM để vẽ hình (bàn cờ, biểu đồ Gantt, lưới ca trực), không
 phải số liệu so sánh — nên nó đi vào `RunRecord.solution` rồi bị loại khỏi CSV
-và JSON xuất ra, giống `stdout_tail`. Model không in dòng này thì mọi thứ chạy
-y như cũ; `solution` khi đó là `None`.
+và JSON số liệu, giống `stdout_tail`, và được ghi riêng qua `--solutions`. Model
+không in dòng này thì mọi thứ chạy y như cũ; `solution` khi đó là `None`.
 
 Dùng như CLI:
     tools/runner.py opl       models/2.1_jobshop/opl/jobshop.mod data/jobshop/ft06.dat
@@ -180,9 +180,28 @@ class RunRecord:
         d.pop("extra", None)
         # Nghiệm là dữ liệu để VẼ, không phải một điểm đo: nhét cả bàn cờ hay cả
         # lịch job-shop vào một ô CSV thì bảng số liệu hết đọc được, mà cũng
-        # chẳng so sánh được với gì.
+        # chẳng so sánh được với gì. Nó đi ra file riêng — xem `as_solution()`.
         d.pop("solution", None)
         return d
+
+    def as_solution(self) -> dict[str, Any] | None:
+        """Bản ghi nghiệm để ghi ra file `--solutions`, `None` nếu không có nghiệm.
+
+        Kèm đủ khoá (`problem`, `dimension`, `label`) để nối lại với một hàng
+        trong `runs.csv`, và `status`/`objective` để biết nghiệm này thuộc lần
+        chạy nào mà khỏi phải mở hai file cùng lúc.
+        """
+        if not self.solution:
+            return None
+        return {
+            "problem": self.problem,
+            "dimension": self.dimension,
+            "label": self.label or self.dimension,
+            "model_file": self.model_file,
+            "status": self.status,
+            "objective": self.objective,
+            "solution": self.solution,
+        }
 
 
 def _to_int(s: str) -> int:
@@ -371,6 +390,11 @@ def _main() -> int:
     ap.add_argument("--all", action="store_true", help="chạy mọi bài có manifest.json")
     ap.add_argument("--csv", metavar="FILE", help="ghi kết quả ra file CSV")
     ap.add_argument("--json", metavar="FILE", help="ghi kết quả ra file JSON")
+    ap.add_argument(
+        "--solutions",
+        metavar="FILE",
+        help="ghi TẬP NGHIỆM (dòng SOLUTION của model) ra file JSON riêng",
+    )
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("dimension", nargs="?", choices=sorted(ENGINE))
     ap.add_argument("model", nargs="?")
@@ -415,6 +439,17 @@ def _main() -> int:
     if a.json:
         pathlib.Path(a.json).write_text(
             json.dumps([r.as_row() for r in records], indent=2, ensure_ascii=False)
+        )
+    if a.solutions:
+        sols = [s for s in (r.as_solution() for r in records) if s is not None]
+        pathlib.Path(a.solutions).write_text(
+            json.dumps(sols, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        # Nói rõ bao nhiêu trên bao nhiêu: file chỉ có 6 mục trong khi chạy 18
+        # model là ĐÚNG (mỗi bài chỉ một chiều in SOLUTION), không phải mất dữ liệu.
+        print(
+            f"→ {a.solutions}: {len(sols)}/{len(records)} lần chạy có dòng SOLUTION",
+            file=sys.stderr,
         )
     if a.csv and records:
         import csv

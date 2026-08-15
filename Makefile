@@ -18,7 +18,8 @@ run:  ## Chạy 3 chiều của MỘT bài:  make run P=models/2.1_jobshop
 	$(PY) tools/runner.py --suite $(P)
 
 run-all:  ## Chạy toàn bộ 6 bài × 3 chiều
-	$(PY) tools/runner.py --all --json results/runs.json --csv results/runs.csv
+	$(PY) tools/runner.py --all --json results/runs.json --csv results/runs.csv \
+	  --solutions results/solutions.json
 
 bench:  ## Benchmark định lượng bài 3.2 (bài duy nhất có đo hiệu năng)
 	$(PY) tools/bench_timetable.py --csv results/bench.csv

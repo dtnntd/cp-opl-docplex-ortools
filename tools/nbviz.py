@@ -737,4 +737,108 @@ def show_solution(problem: str):
     return _emit(fig)
 
 
-__all__ = ["show_solution", "DIMENSION_COLORS", "SERIES", "VIZ_DIMENSION"]
+#: Số dòng tối đa in ra cho một bảng nghiệm. Bảng dài nhất hiện nay là `sessions`
+#: của bài 3.2 với 106 dòng, nên ngưỡng phải nằm TRÊN con số đó: bảng này là tập
+#: nghiệm, cắt bớt là in ra một nghiệm không đầy đủ. Ngưỡng chỉ còn là chốt chặn
+#: cho bộ dữ liệu lớn hơn hẳn, và khi chạm thì nói rõ đã cắt bao nhiêu dòng.
+_MAX_SOLUTION_ROWS = 150
+
+
+def _fmt_cell(v) -> str:
+    if isinstance(v, bool):
+        return "✓" if v else "·"
+    if isinstance(v, float):
+        return f"{v:g}"
+    if isinstance(v, (list, tuple)):
+        return ", ".join(_fmt_cell(x) for x in v)
+    return str(v)
+
+
+def _rows_table(name: str, rows: list[dict]) -> str:
+    """Bảng markdown cho một danh sách bản ghi (task, ca trực, phiên học...)."""
+    cols: list[str] = []
+    for row in rows:
+        for k in row:
+            if k not in cols:
+                cols.append(k)
+    head = f"| {' | '.join(cols)} |\n|{'|'.join(['---'] * len(cols))}|"
+    body = "\n".join(
+        "| " + " | ".join(_fmt_cell(row.get(c, "")) for c in cols) + " |"
+        for row in rows[:_MAX_SOLUTION_ROWS]
+    )
+    more = (f"\n\n*(còn {len(rows) - _MAX_SOLUTION_ROWS} dòng nữa, đã cắt bớt)*"
+            if len(rows) > _MAX_SOLUTION_ROWS else "")
+    return f"**`{name}`** — {len(rows)} dòng\n\n{head}\n{body}{more}"
+
+
+def _render_solution(sol: dict) -> str:
+    """Dựng markdown cho một cấu trúc `SOLUTION` bất kỳ.
+
+    CỐ Ý viết tổng quát thay vì một hàm cho mỗi bài: đây là NGHIỆM THÔ, đúng
+    những khoá mà model đã in ra. Bài nào cần cách trình bày riêng thì đã có
+    hình vẽ ở `_DRAWERS` lo phần đó.
+    """
+    scalars: list[tuple[str, str]] = []
+    blocks: list[str] = []
+    for key, value in sol.items():
+        if key == "problem":       # trùng với tiêu đề ngay phía trên
+            continue
+        if isinstance(value, list) and value and isinstance(value[0], dict):
+            blocks.append(_rows_table(key, value))
+        elif isinstance(value, dict):
+            blocks.append(_rows_table(key, [{"khoá": k, "giá trị": _fmt_cell(v)}
+                                            for k, v in value.items()]))
+        elif isinstance(value, list):
+            scalars.append((key, "`" + "`, `".join(_fmt_cell(v) for v in value) + "`"))
+        else:
+            scalars.append((key, f"`{_fmt_cell(value)}`"))
+
+    parts = []
+    if scalars:
+        parts.append("| Khoá | Giá trị |\n|---|---|\n" + "\n".join(
+            f"| `{k}` | {v} |" for k, v in scalars))
+    parts.extend(blocks)
+    return "\n\n".join(parts)
+
+
+def show_solution_data(problem: str):
+    """In TẬP NGHIỆM của một bài dưới dạng bảng — phần chữ đi kèm hình vẽ.
+
+    Hình cho thấy nghiệm *trông* thế nào; bảng này cho thấy nghiệm *là* gì, đúng
+    từng giá trị biến mà model in ra ở dòng `SOLUTION`. Cùng một bản ghi với
+    `show_solution()` nên hai thứ luôn nói về cùng một nghiệm.
+
+    Cùng chính sách với `show_solution()`: thiếu gì thì in một dòng nói rõ thiếu
+    gì rồi trả về `None`, không bao giờ ném exception.
+    """
+    rec = _viz_record(problem)
+    if rec is None:
+        print(f"ℹ️  Không in được tập nghiệm bài {problem}: phiên này không có bản "
+              f"ghi nào của chiều `{VIZ_DIMENSION}`\n"
+              f"    (bị `{nbutil.DIMENSIONS_ENV}` lọc bỏ, hoặc manifest.json không "
+              "khai chiều đó). Đây không phải lỗi mô hình.")
+        return None
+    if not rec.ok:
+        print(f"ℹ️  Không in được tập nghiệm bài {problem}: chiều `{VIZ_DIMENSION}` "
+              f"kết thúc với status = {rec.status}.")
+        return None
+    if not rec.solution:
+        print(f"ℹ️  Không in được tập nghiệm bài {problem}: chiều `{VIZ_DIMENSION}` "
+              "chạy xong nhưng không in dòng `SOLUTION`\n"
+              f"    (xem giao kèo ở đầu tools/runner.py).")
+        return None
+
+    obj = "" if rec.objective is None else f" · objective = **{_fmt_cell(rec.objective)}**"
+    header = (f"**Tập nghiệm — {problem}, chiều `{VIZ_DIMENSION}` "
+              f"({nbutil.ENGINE[VIZ_DIMENSION]})** · status = `{rec.status}`{obj}")
+    try:
+        body = _render_solution(rec.solution)
+    except (AttributeError, TypeError, ValueError) as exc:
+        print(f"ℹ️  Không in được tập nghiệm bài {problem}: dòng `SOLUTION` sai kiểu "
+              f"dữ liệu ({exc.__class__.__name__}: {exc}).")
+        return None
+    return nbutil._md(f"{header}\n\n{body}")
+
+
+__all__ = ["show_solution", "show_solution_data", "DIMENSION_COLORS", "SERIES",
+           "VIZ_DIMENSION"]
